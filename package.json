@@ -16,7 +16,8 @@
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
     "dev:web": "pnpm --filter @oficina/web dev",
-    "dev:admin": "pnpm --filter @oficina/admin dev"
+    "dev:admin": "pnpm --filter @oficina/admin dev",
+    "dev:marketing": "pnpm --filter @oficina/marketing dev"
   },
   "devDependencies": {
     "prettier": "^3.5.3",

@@ -1,0 +1,58 @@
+# syntax=docker/dockerfile:1
+
+# Oficina Marketing (apps/marketing) — porta 3002
+ARG NODE_VERSION=20
+
+FROM node:${NODE_VERSION}-bookworm-slim AS base
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+WORKDIR /app
+
+FROM base AS deps
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY apps/web/package.json ./apps/web/
+COPY apps/admin/package.json ./apps/admin/
+COPY apps/marketing/package.json ./apps/marketing/
+COPY packages/database/package.json ./packages/database/
+COPY packages/auth/package.json ./packages/auth/
+COPY packages/shared/package.json ./packages/shared/
+RUN pnpm install --frozen-lockfile
+
+FROM deps AS builder
+COPY . .
+
+# NEXT_PUBLIC_* entram no bundle — passar no build (compose/args)
+ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
+ARG NEXT_PUBLIC_SITE_URL=http://localhost:3004
+ARG NEXT_PUBLIC_WHATSAPP=
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+ENV NEXT_PUBLIC_WHATSAPP=$NEXT_PUBLIC_WHATSAPP
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
+
+RUN pnpm --filter @oficina/marketing build
+
+FROM base AS runner
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3002
+ENV HOSTNAME=0.0.0.0
+
+RUN groupadd --system --gid 1001 nodejs \
+  && useradd --system --uid 1001 --gid nodejs nextjs
+
+WORKDIR /app
+
+COPY --from=builder --chown=nextjs:nodejs /app/apps/marketing/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/marketing/.next/static ./apps/marketing/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/apps/marketing/public ./apps/marketing/public
+
+USER nextjs
+EXPOSE 3002
+WORKDIR /app/apps/marketing
+CMD ["node", "server.js"]

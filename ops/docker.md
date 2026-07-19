@@ -23,16 +23,33 @@ cp .env.example .env   # se ainda não tiver
 docker compose up -d --build
 ```
 
-App em http://localhost:3000 (ou `PORT` no `.env`).
+App em http://localhost:3000 (ou `PORT` no `.env`).  
+Console em http://localhost:3001 (`ADMIN_PORT`).  
+Marketing em http://localhost:3004 (`MARKETING_PORT`; container interno :3002).
 
 ## Comandos úteis
 
 | Comando | Efeito |
 |---------|--------|
-| `docker compose up -d --build` | Build + sobe |
-| `docker compose logs -f web` | Logs |
+| `docker compose up -d --build` | Build + sobe todos |
+| `docker compose up -d --build marketing` | Só o site marketing |
+| `docker compose logs -f web` | Logs do produto |
+| `docker compose logs -f marketing` | Logs do marketing |
 | `docker compose down` | Para |
 | `docker compose restart web` | Reinicia |
+
+## Marketing (`apps/marketing`)
+
+Site de conversão. Variáveis embutidas no **build**:
+
+- `NEXT_PUBLIC_APP_URL` — CTAs signup/login do produto
+- `NEXT_PUBLIC_SITE_URL` — URL pública do site (SEO/OG); local Docker: `http://localhost:3004`
+- `NEXT_PUBLIC_WHATSAPP` — opcional (DDI + número)
+
+```bash
+docker compose up -d --build marketing
+# → http://localhost:3004
+```
 
 ## Migrations
 

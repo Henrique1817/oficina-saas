@@ -9,7 +9,7 @@ SaaS multi-tenant para oficinas mecânicas brasileiras. Cada oficina tem seu amb
 | **Para quem** | Oficinas pequenas e médias que ainda vivem de planilha, WhatsApp e caderno |
 | **Modelo** | SaaS B2B — **R$ 97/mês** ou **R$ 970/ano** |
 | **Trial** | 14 dias grátis (cartão no cadastro; cobrança só após o trial) |
-| **Apps** | Produto do tenant (`apps/web`) + console da plataforma (`apps/admin`) |
+| **Apps** | Produto (`apps/web`) · console (`apps/admin`) · marketing (`apps/marketing`) |
 
 ---
 
@@ -115,6 +115,7 @@ Documentação de go-to-market e operação: pasta [`ops/`](ops/).
 |--------|--------|
 | `apps/web` | Produto SaaS da oficina (UI + API) |
 | `apps/admin` | Console da plataforma |
+| `apps/marketing` | Site marketing de conversão (landing) |
 | `packages/database` | Schema Prisma, migrações, seed, client |
 | `packages/auth` | `withAuth`, RBAC de rotas, contexto de org |
 | `packages/shared` | Schemas Zod, helpers HTTP, política de acesso ao plano |
