@@ -1,18 +1,26 @@
 import { z } from "zod";
 import { SERVICE_ORDER_STATUSES } from "../enums";
 
+const optionalDate = z
+  .union([z.coerce.date(), z.null()])
+  .optional()
+  .transform((v) => (v === undefined ? undefined : v));
+
 export const createServiceOrderSchema = z.object({
   customerId: z.string().cuid(),
   vehicleId: z.string().cuid(),
-  assignedMechanicId: z.string().uuid().optional(),
+  assignedMechanicId: z.string().uuid().optional().nullable(),
   description: z.string().max(5000).optional(),
   internalNotes: z.string().max(5000).optional(),
+  dueAt: optionalDate,
 });
 
 export const updateServiceOrderSchema = z.object({
   assignedMechanicId: z.string().uuid().nullable().optional(),
-  description: z.string().max(5000).optional(),
-  internalNotes: z.string().max(5000).optional(),
+  description: z.string().max(5000).optional().nullable(),
+  internalNotes: z.string().max(5000).optional().nullable(),
+  dueAt: optionalDate,
+  discount: z.number().min(0).optional(),
 });
 
 export const serviceOrderLineSchema = z
@@ -45,10 +53,18 @@ export const serviceOrderQuoteActionSchema = z.object({
   notes: z.string().max(2000).optional(),
 });
 
+export const authorizeServiceOrderSchema = z.object({
+  signedBy: z.string().min(2).max(120),
+  notes: z.string().max(2000).optional(),
+  method: z.enum(["digital", "print"]).default("digital"),
+});
+
 export const serviceOrderQuerySchema = z.object({
   status: z.enum(SERVICE_ORDER_STATUSES).optional(),
   mechanicId: z.string().uuid().optional(),
   customerId: z.string().cuid().optional(),
+  /** Filtros de agenda / prazo */
+  due: z.enum(["today", "overdue"]).optional(),
   cursor: z.string().optional(),
   limit: z.coerce.number().min(1).max(100).default(20),
 });
@@ -59,3 +75,4 @@ export type TransitionServiceOrderInput = z.infer<typeof transitionServiceOrderS
 export type ServiceOrderLineInput = z.infer<typeof serviceOrderLineSchema>;
 export type ServiceOrderLaborInput = z.infer<typeof serviceOrderLaborSchema>;
 export type ServiceOrderQuoteActionInput = z.infer<typeof serviceOrderQuoteActionSchema>;
+export type AuthorizeServiceOrderInput = z.infer<typeof authorizeServiceOrderSchema>;

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -39,7 +39,7 @@ export function CreateWorkshopForm() {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3 rounded-xl border border-border bg-card p-4">
+    <form onSubmit={submit} className="space-y-3 border border-line bg-bg-panel p-4">
       {error && <p className="text-sm text-danger">{error}</p>}
       <input
         type="text"

@@ -14,6 +14,7 @@ import {
   LifeBuoy,
   ScrollText,
   LogOut,
+  Rocket,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ const EXPANDED_W = 232;
 const links: { href: string; label: string; icon: LucideIcon; exact?: boolean }[] = [
   { href: "/", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/oficinas", label: "Oficinas", icon: Building2 },
+  { href: "/pilotos", label: "Pilotos", icon: Rocket },
   { href: "/pagamentos", label: "Pagamentos", icon: CreditCard },
   { href: "/saude", label: "Saúde", icon: Activity },
   { href: "/suporte", label: "Suporte", icon: LifeBuoy },

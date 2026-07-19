@@ -4,6 +4,7 @@ import {
   type Prisma,
 } from "@oficina/database";
 import type {
+  AuthorizeServiceOrderInput,
   CreateServiceOrderInput,
   ServiceOrderLaborInput,
   ServiceOrderLineInput,
@@ -16,8 +17,15 @@ import {
   releaseAllReservationsForOrder,
   ServiceOrderInventoryError,
 } from "./service-order-inventory";
+import { OPEN_ORDER_STATUSES, saoPauloDayRange, WORK_ORDER_STATUSES } from "./agenda";
 
 export { ServiceOrderInventoryError };
+
+const agendaInclude = {
+  customer: { select: { name: true } },
+  vehicle: { select: { plate: true, vehicleModel: true } },
+  assignedMechanic: { select: { id: true, fullName: true } },
+} as const;
 
 const VALID_TRANSITIONS: Record<ServiceOrderStatus, ServiceOrderStatus[]> = {
   DRAFT: ["APPROVED", "CANCELLED"],
@@ -43,6 +51,7 @@ export const serviceOrderRepository = {
       status?: ServiceOrderStatus;
       mechanicId?: string;
       customerId?: string;
+      due?: "today" | "overdue";
       cursor?: string;
       limit: number;
     },
@@ -52,11 +61,20 @@ export const serviceOrderRepository = {
     if (params.mechanicId) where.assignedMechanicId = params.mechanicId;
     if (params.customerId) where.customerId = params.customerId;
 
+    if (params.due === "today") {
+      const { start, end } = saoPauloDayRange();
+      where.status = { in: [...OPEN_ORDER_STATUSES] };
+      where.dueAt = { gte: start, lte: end };
+    } else if (params.due === "overdue") {
+      where.status = { in: [...OPEN_ORDER_STATUSES] };
+      where.dueAt = { lt: new Date() };
+    }
+
     const items = await prisma.serviceOrder.findMany({
       where,
       take: params.limit + 1,
       ...(params.cursor ? { cursor: { id: params.cursor }, skip: 1 } : {}),
-      orderBy: { createdAt: "desc" },
+      orderBy: params.due ? { dueAt: "asc" } : { createdAt: "desc" },
       include: {
         customer: { select: { name: true } },
         vehicle: { select: { plate: true, vehicleModel: true, vehicleYear: true } },
@@ -69,6 +87,89 @@ export const serviceOrderRepository = {
     return { data, nextCursor: hasMore ? data[data.length - 1]?.id ?? null : null, hasMore };
   },
 
+  /** Agenda operacional do dia: prazos, atrasos e quadro por mecânico. */
+  async getAgenda(organizationId: string, opts?: { mechanicId?: string }) {
+    const now = new Date();
+    const { start, end, ymd } = saoPauloDayRange(now);
+    const mechanicFilter = opts?.mechanicId
+      ? { assignedMechanicId: opts.mechanicId }
+      : {};
+
+    const openBase: Prisma.ServiceOrderWhereInput = {
+      organizationId,
+      status: { in: [...OPEN_ORDER_STATUSES] },
+      ...mechanicFilter,
+    };
+
+    const [dueToday, overdue, inProgressBoard] = await Promise.all([
+      prisma.serviceOrder.findMany({
+        where: {
+          ...openBase,
+          dueAt: { gte: start, lte: end },
+        },
+        orderBy: { dueAt: "asc" },
+        take: 40,
+        include: agendaInclude,
+      }),
+      prisma.serviceOrder.findMany({
+        where: {
+          ...openBase,
+          dueAt: { lt: now },
+        },
+        orderBy: { dueAt: "asc" },
+        take: 40,
+        include: agendaInclude,
+      }),
+      prisma.serviceOrder.findMany({
+        where: {
+          organizationId,
+          status: { in: [...WORK_ORDER_STATUSES] },
+          ...mechanicFilter,
+        },
+        orderBy: [{ dueAt: "asc" }, { openedAt: "asc" }],
+        take: 60,
+        include: agendaInclude,
+      }),
+    ]);
+
+    type BoardOrder = (typeof inProgressBoard)[number];
+    const byMechanicMap = new Map<
+      string,
+      { mechanicId: string | null; mechanicName: string; orders: BoardOrder[] }
+    >();
+
+    for (const order of inProgressBoard) {
+      const key = order.assignedMechanicId ?? "unassigned";
+      const name = order.assignedMechanic?.fullName ?? "Sem mecânico";
+      if (!byMechanicMap.has(key)) {
+        byMechanicMap.set(key, {
+          mechanicId: order.assignedMechanicId,
+          mechanicName: name,
+          orders: [],
+        });
+      }
+      byMechanicMap.get(key)!.orders.push(order);
+    }
+
+    const byMechanic = [...byMechanicMap.values()].sort((a, b) => {
+      if (a.mechanicId === null) return 1;
+      if (b.mechanicId === null) return -1;
+      return a.mechanicName.localeCompare(b.mechanicName, "pt-BR");
+    });
+
+    return {
+      day: ymd,
+      counts: {
+        dueToday: dueToday.length,
+        overdue: overdue.length,
+        inProgress: inProgressBoard.length,
+      },
+      dueToday,
+      overdue,
+      byMechanic,
+    };
+  },
+
   async getById(organizationId: string, id: string) {
     return prisma.serviceOrder.findFirst({
       where: { id, organizationId },
@@ -79,16 +180,25 @@ export const serviceOrderRepository = {
         lines: { include: { part: true } },
         laborEntries: { include: { mechanic: { select: { fullName: true, id: true } } } },
         statusHistory: { orderBy: { createdAt: "desc" }, take: 20 },
-        toolCheckouts: { where: { returnedAt: null } },
+        toolCheckouts: {
+          where: { returnedAt: null },
+          include: {
+            tool: { select: { id: true, name: true, assetCode: true } },
+            checkedOutBy: { select: { id: true, fullName: true } },
+          },
+        },
       },
     });
   },
 
   async create(organizationId: string, input: CreateServiceOrderInput, createdById: string) {
     const orderNumber = await nextOrderNumber(organizationId);
+    const { assignedMechanicId, dueAt, ...rest } = input;
     return prisma.serviceOrder.create({
       data: {
-        ...input,
+        ...rest,
+        assignedMechanicId: assignedMechanicId ?? null,
+        dueAt: dueAt ?? null,
         organizationId,
         orderNumber,
         statusHistory: {
@@ -106,7 +216,58 @@ export const serviceOrderRepository = {
   async update(organizationId: string, id: string, input: UpdateServiceOrderInput) {
     const existing = await prisma.serviceOrder.findFirst({ where: { id, organizationId } });
     if (!existing) throw new Error("NOT_FOUND");
-    return prisma.serviceOrder.update({ where: { id }, data: input });
+    const { discount, ...rest } = input;
+    const updated = await prisma.serviceOrder.update({
+      where: { id },
+      data: {
+        ...rest,
+        ...(discount !== undefined ? { discount } : {}),
+      },
+    });
+    if (discount !== undefined) {
+      await recalculateTotals(id);
+      return this.getById(organizationId, id);
+    }
+    return updated;
+  },
+
+  async authorizeWork(
+    organizationId: string,
+    id: string,
+    input: AuthorizeServiceOrderInput,
+    userId: string,
+  ) {
+    const order = await prisma.serviceOrder.findFirstOrThrow({
+      where: { id, organizationId },
+      include: { lines: true, laborEntries: true },
+    });
+    if (order.status === "CANCELLED") throw new Error("ORDER_CANCELLED");
+    if (order.lines.length === 0 && order.laborEntries.length === 0) {
+      throw new Error("AUTHORIZE_EMPTY");
+    }
+
+    return prisma.serviceOrder.update({
+      where: { id },
+      data: {
+        workAuthorizedAt: new Date(),
+        workAuthorizedBy: input.signedBy.trim(),
+        workAuthorizedNotes: input.notes?.trim() || null,
+        workAuthorizedMethod: input.method,
+        statusHistory: {
+          create: {
+            fromStatus: order.status,
+            toStatus: order.status,
+            changedById: userId,
+            notes: `Serviço autorizado por ${input.signedBy.trim()} (${input.method})`,
+          },
+        },
+      },
+      include: {
+        customer: true,
+        vehicle: true,
+        assignedMechanic: true,
+      },
+    });
   },
 
   async addLine(
@@ -165,7 +326,11 @@ export const serviceOrderRepository = {
   },
 
   async addLabor(organizationId: string, serviceOrderId: string, labor: ServiceOrderLaborInput) {
-    await prisma.serviceOrder.findFirstOrThrow({ where: { id: serviceOrderId, organizationId } });
+    const existing = await prisma.serviceOrder.findFirstOrThrow({
+      where: { id: serviceOrderId, organizationId },
+    });
+    if (existing.status !== "DRAFT") throw new Error("LABOR_ONLY_DRAFT");
+    if (existing.quoteSentAt) throw new Error("QUOTE_LOCKED");
     const total = (labor.minutes / 60) * labor.hourlyRate;
     await prisma.serviceOrderLabor.create({
       data: { ...labor, serviceOrderId, total },
@@ -177,11 +342,13 @@ export const serviceOrderRepository = {
   async sendQuote(organizationId: string, id: string, userId: string) {
     const order = await prisma.serviceOrder.findFirstOrThrow({
       where: { id, organizationId },
-      include: { lines: true },
+      include: { lines: true, laborEntries: true },
     });
     if (order.status !== "DRAFT") throw new Error("QUOTE_ONLY_DRAFT");
     if (order.quoteSentAt) throw new Error("QUOTE_ALREADY_SENT");
-    if (order.lines.length === 0) throw new Error("QUOTE_EMPTY");
+    if (order.lines.length === 0 && order.laborEntries.length === 0) {
+      throw new Error("QUOTE_EMPTY");
+    }
 
     return prisma.serviceOrder.update({
       where: { id },

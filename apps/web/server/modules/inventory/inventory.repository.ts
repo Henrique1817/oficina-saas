@@ -23,10 +23,13 @@ export const inventoryRepository = {
       where.fitments = { some: { variantId: params.variantId } };
     }
 
+    // Estoque baixo exige agregação — buscar lote maior e filtrar em memória
+    const take = params.lowStock ? Math.max(params.limit * 5, 200) : params.limit + 1;
+
     const parts = await prisma.part.findMany({
       where,
-      take: params.limit + 1,
-      ...(params.cursor ? { cursor: { id: params.cursor }, skip: 1 } : {}),
+      take,
+      ...(params.cursor && !params.lowStock ? { cursor: { id: params.cursor }, skip: 1 } : {}),
       orderBy: { name: "asc" },
       include: {
         stockItems: { include: { location: true } },
@@ -43,7 +46,7 @@ export const inventoryRepository = {
     }
 
     const hasMore = filtered.length > params.limit;
-    const data = hasMore ? filtered.slice(0, -1) : filtered;
+    const data = hasMore ? filtered.slice(0, params.limit) : filtered;
     return { data, nextCursor: hasMore ? data[data.length - 1]?.id ?? null : null, hasMore };
   },
 

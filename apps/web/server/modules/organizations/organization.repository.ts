@@ -92,4 +92,32 @@ export const organizationRepository = {
   async findById(id: string) {
     return prisma.organization.findUnique({ where: { id } });
   },
+
+  async updateBranding(
+    organizationId: string,
+    data: {
+      name?: string;
+      phone?: string | null;
+      email?: string | null;
+      address?: string | null;
+      quoteValidityDays?: number;
+      whatsappTemplates?: unknown;
+    },
+  ) {
+    return prisma.organization.update({
+      where: { id: organizationId },
+      data: {
+        ...(data.name !== undefined ? { name: data.name.trim() } : {}),
+        ...(data.phone !== undefined ? { phone: data.phone || null } : {}),
+        ...(data.email !== undefined ? { email: data.email || null } : {}),
+        ...(data.address !== undefined ? { address: data.address || null } : {}),
+        ...(data.quoteValidityDays !== undefined
+          ? { quoteValidityDays: data.quoteValidityDays }
+          : {}),
+        ...(data.whatsappTemplates !== undefined
+          ? { whatsappTemplates: data.whatsappTemplates as object }
+          : {}),
+      },
+    });
+  },
 };

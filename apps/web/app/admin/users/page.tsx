@@ -1,6 +1,7 @@
 import { userRepository } from "@/server/modules/users/user.repository";
 import { inviteRepository } from "@/server/modules/users/invite.repository";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { getSessionOrRedirect } from "@/lib/session";
 import { InviteUserButton } from "@/components/actions/invite-user-button";
 import { UserRoleSelect } from "@/components/actions/user-role-select";
@@ -14,47 +15,56 @@ export default async function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold">Usuários</h1>
-        <InviteUserButton />
-      </div>
+      <PageHeader
+        eyebrow="Equipe"
+        title="Usuários"
+        description="Admin, Gerente e Mecânico — cada um no seu escopo."
+        actions={<InviteUserButton />}
+      />
 
-      <Card>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border text-left text-muted-foreground">
-              <th className="pb-2">Nome</th>
-              <th className="pb-2">E-mail</th>
-              <th className="pb-2">Função</th>
-              <th className="pb-2">Ativo</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u.id} className="border-b border-border/50">
-                <td className="py-3">{u.fullName}</td>
-                <td className="py-3">{u.email}</td>
-                <td className="py-3">
-                  <UserRoleSelect userId={u.id} currentRole={u.role} />
-                </td>
-                <td className="py-3">{u.active ? "Sim" : "Não"}</td>
+      <Card className="p-0">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px] text-sm">
+            <thead>
+              <tr className="border-b border-line text-left">
+                <th className="mono-label px-6 pb-3 pt-5 text-ink-mute">Nome</th>
+                <th className="mono-label px-3 pb-3 pt-5 text-ink-mute">E-mail</th>
+                <th className="mono-label px-3 pb-3 pt-5 text-ink-mute">Função</th>
+                <th className="mono-label px-6 pb-3 pt-5 text-ink-mute">Ativo</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {users.map((u) => (
+                <tr key={u.id} className="border-b border-line/60">
+                  <td className="px-6 py-4 font-medium text-ink">{u.fullName}</td>
+                  <td className="px-3 py-4 text-ink-dim">{u.email}</td>
+                  <td className="px-3 py-4">
+                    <UserRoleSelect userId={u.id} currentRole={u.role} />
+                  </td>
+                  <td className="px-6 py-4 text-ink-dim">{u.active ? "Sim" : "Não"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Card>
 
       {invites.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold">Convites pendentes</h2>
-          <Card>
-            <ul className="divide-y divide-border text-sm">
+          <h2 className="mono-label text-signal">Convites pendentes</h2>
+          <Card className="p-0">
+            <ul className="divide-y divide-line text-sm">
               {invites.map((inv) => (
-                <li key={inv.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
-                  <span>
-                    {inv.email} · {inv.role}
+                <li
+                  key={inv.id}
+                  className="flex flex-wrap items-center justify-between gap-2 px-6 py-4"
+                >
+                  <span className="text-ink-dim">
+                    {inv.email} · <span className="text-signal">{inv.role}</span>
                   </span>
-                  <code className="text-xs text-muted-foreground">/invite/{inv.token}</code>
+                  <code className="font-[family-name:var(--font-mono)] text-xs text-ink-mute">
+                    /invite/{inv.token}
+                  </code>
                 </li>
               ))}
             </ul>

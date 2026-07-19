@@ -64,6 +64,12 @@ export default async function OficinaDetailPage({
             <dd className={org.billingExempt ? "text-accent" : ""}>
               {org.billingExempt ? "Sim (sem cobrança/dunning)" : "Não"}
             </dd>
+            <dt className="text-muted-foreground">Design partner</dt>
+            <dd className={org.designPartner ? "text-accent" : ""}>
+              {org.designPartner ? "Sim (cohort soft launch)" : "Não"}
+            </dd>
+            <dt className="text-muted-foreground">Contato piloto</dt>
+            <dd>{org.designPartnerContact ?? "—"}</dd>
             <dt className="text-muted-foreground">Criada</dt>
             <dd>{org.createdAt.toLocaleString("pt-BR")}</dd>
             <dt className="text-muted-foreground">Uso</dt>
@@ -121,6 +127,7 @@ export default async function OficinaDetailPage({
           organizationId={org.id}
           suspended={Boolean(org.suspendedAt)}
           billingExempt={org.billingExempt}
+          designPartner={org.designPartner}
           initialNote={org.internalNote ?? ""}
           canTenantsWrite={hasCapability(session.role, PlatformCapability.tenantsWrite)}
           canBillingWrite={hasCapability(session.role, PlatformCapability.billingWrite)}

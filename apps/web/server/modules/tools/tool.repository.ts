@@ -9,7 +9,10 @@ export const toolRepository = {
       include: {
         checkouts: {
           where: { returnedAt: null },
-          include: { checkedOutBy: { select: { id: true, fullName: true } } },
+          include: {
+            checkedOutBy: { select: { id: true, fullName: true } },
+            serviceOrder: { select: { id: true, orderNumber: true } },
+          },
           take: 1,
         },
         maintenances: {
@@ -26,6 +29,16 @@ export const toolRepository = {
 
   async checkout(organizationId: string, input: ToolCheckoutInput, userId: string) {
     return prisma.$transaction(async (tx) => {
+      if (input.serviceOrderId) {
+        const order = await tx.serviceOrder.findFirst({
+          where: { id: input.serviceOrderId, organizationId },
+        });
+        if (!order) throw new Error("SERVICE_ORDER_NOT_FOUND");
+        if (!["APPROVED", "IN_PROGRESS"].includes(order.status)) {
+          throw new Error("SERVICE_ORDER_NOT_ACTIVE");
+        }
+      }
+
       const tool = await tx.tool.findFirstOrThrow({ where: { id: input.toolId, organizationId } });
       if (tool.status !== ToolStatus.AVAILABLE) {
         throw new Error("TOOL_NOT_AVAILABLE");
@@ -43,7 +56,11 @@ export const toolRepository = {
           serviceOrderId: input.serviceOrderId,
           notes: input.notes,
         },
-        include: { checkedOutBy: true, tool: true },
+        include: {
+          checkedOutBy: true,
+          tool: true,
+          serviceOrder: { select: { id: true, orderNumber: true } },
+        },
       });
 
       await tx.tool.update({

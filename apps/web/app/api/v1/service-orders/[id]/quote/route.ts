@@ -48,7 +48,10 @@ export const POST = withAuth(async (ctx, request) => {
         QUOTE_ONLY_DRAFT: { message: "Orçamento só pode ser alterado em OS rascunho", status: 400 },
         QUOTE_ALREADY_SENT: { message: "Orçamento já foi enviado", status: 400 },
         QUOTE_NOT_SENT: { message: "Envie o orçamento antes de aprovar ou reprovar", status: 400 },
-        QUOTE_EMPTY: { message: "Adicione ao menos uma linha antes de enviar o orçamento", status: 400 },
+        QUOTE_EMPTY: {
+          message: "Adicione peça, serviço ou mão de obra antes de enviar o orçamento",
+          status: 400,
+        },
         INVALID_TRANSITION: { message: "Transição de status inválida", status: 400 },
       };
       const hit = map[e.message];

@@ -32,8 +32,91 @@ export const customerRepository = {
   async getById(organizationId: string, id: string) {
     return prisma.customer.findFirst({
       where: { id, organizationId },
-      include: { vehicles: { include: { variant: true } } },
+      include: {
+        vehicles: {
+          include: { variant: true },
+          orderBy: { createdAt: "desc" },
+        },
+      },
     });
+  },
+
+  /** Ficha do cliente: veículos + histórico de OS + resumo. */
+  async getProfile(organizationId: string, id: string, historyLimit = 30) {
+    const customer = await prisma.customer.findFirst({
+      where: { id, organizationId },
+      include: {
+        vehicles: {
+          orderBy: { createdAt: "desc" },
+          include: { variant: true },
+        },
+        _count: { select: { vehicles: true, serviceOrders: true } },
+      },
+    });
+    if (!customer) return null;
+
+    const serviceOrders = await prisma.serviceOrder.findMany({
+      where: { organizationId, customerId: id },
+      orderBy: { createdAt: "desc" },
+      take: historyLimit,
+      include: {
+        vehicle: {
+          select: { plate: true, vehicleModel: true, vehicleYear: true },
+        },
+        assignedMechanic: { select: { fullName: true } },
+        lines: {
+          select: { type: true, description: true, part: { select: { sku: true, name: true } } },
+          take: 8,
+        },
+      },
+    });
+
+    const [openCount, spentAgg, lastParts] = await Promise.all([
+      prisma.serviceOrder.count({
+        where: {
+          organizationId,
+          customerId: id,
+          status: { in: ["DRAFT", "APPROVED", "IN_PROGRESS"] },
+        },
+      }),
+      prisma.serviceOrder.aggregate({
+        where: {
+          organizationId,
+          customerId: id,
+          status: { in: ["DONE", "INVOICED"] },
+        },
+        _sum: { total: true },
+        _count: true,
+      }),
+      prisma.serviceOrderLine.findMany({
+        where: {
+          type: "PART",
+          partId: { not: null },
+          serviceOrder: { organizationId, customerId: id },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 12,
+        select: {
+          description: true,
+          createdAt: true,
+          part: { select: { sku: true, name: true } },
+          serviceOrder: { select: { orderNumber: true, id: true } },
+        },
+      }),
+    ]);
+
+    return {
+      ...customer,
+      serviceOrders,
+      stats: {
+        openOrders: openCount,
+        completedOrders: spentAgg._count,
+        lifetimeSpend: Number(spentAgg._sum.total ?? 0),
+        vehicleCount: customer._count.vehicles,
+        orderCount: customer._count.serviceOrders,
+      },
+      recentParts: lastParts,
+    };
   },
 
   async create(organizationId: string, input: CreateCustomerInput) {

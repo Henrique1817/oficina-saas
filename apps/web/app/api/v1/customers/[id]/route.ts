@@ -8,7 +8,11 @@ function getId(request: Request) {
 }
 
 export const GET = withAuth(async (ctx, request) => {
-  const customer = await customerRepository.getById(ctx.organizationId, getId(request));
+  const id = getId(request);
+  const history = new URL(request.url).searchParams.get("history") === "1";
+  const customer = history
+    ? await customerRepository.getProfile(ctx.organizationId, id)
+    : await customerRepository.getById(ctx.organizationId, id);
   if (!customer) return apiError("Customer not found", 404);
   return apiSuccess(customer);
 }, { roles: ["ADMIN", "MANAGER", "MECHANIC"] });

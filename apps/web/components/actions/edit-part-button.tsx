@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -66,7 +66,7 @@ export function EditPartButton({ part }: { part: PartRow }) {
           />
           <form
             onSubmit={submit}
-            className="relative z-10 max-h-[90vh] w-full max-w-md space-y-3 overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl"
+            className="relative z-10 max-h-[90vh] w-full max-w-md space-y-3 overflow-y-auto border border-line bg-bg-panel p-6 shadow-xl"
           >
             <h2 className="text-lg font-semibold">Editar peça</h2>
             {error && <p className="text-sm text-danger">{error}</p>}

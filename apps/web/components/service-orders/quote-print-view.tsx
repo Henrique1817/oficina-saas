@@ -1,7 +1,21 @@
 "use client";
 
-import type { ServiceOrder, Customer, Vehicle, ServiceOrderLine, ServiceOrderLabor, Part } from "@oficina/database";
-import type { Profile } from "@oficina/database";
+import { useMemo, useState } from "react";
+import type {
+  ServiceOrder,
+  Customer,
+  Vehicle,
+  ServiceOrderLine,
+  ServiceOrderLabor,
+  Part,
+  Profile,
+} from "@oficina/database";
+import type { WhatsappTemplate } from "@oficina/shared";
+import {
+  fillQuoteTemplate,
+  parseWhatsappTemplates,
+  whatsappUrl,
+} from "@/lib/quote-messaging";
 
 type OrderWithRelations = ServiceOrder & {
   customer: Customer;
@@ -11,30 +25,59 @@ type OrderWithRelations = ServiceOrder & {
   laborEntries: (ServiceOrderLabor & { mechanic: { fullName: string } })[];
 };
 
+type WorkshopBrand = {
+  name: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  quoteValidityDays: number;
+  whatsappTemplates: unknown;
+};
+
 function money(value: number | { toString(): string }) {
   return Number(value).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-function digitsOnly(phone: string) {
-  return phone.replace(/\D/g, "");
-}
+export function QuotePrintView({
+  order,
+  workshop,
+}: {
+  order: OrderWithRelations;
+  workshop: WorkshopBrand;
+}) {
+  const templates = useMemo(
+    () => parseWhatsappTemplates(workshop.whatsappTemplates),
+    [workshop.whatsappTemplates],
+  );
+  const [templateId, setTemplateId] = useState(templates[0]?.id ?? "orcamento");
 
-function whatsappQuoteUrl(order: OrderWithRelations) {
-  const phone = order.customer.phone ? digitsOnly(order.customer.phone) : "";
-  const text = [
-    `Olá ${order.customer.name}!`,
-    `Segue o orçamento #${order.orderNumber} do veículo ${order.vehicle.plate} (${order.vehicle.vehicleModel}).`,
-    `Total: ${money(order.total)}.`,
-    "Qualquer dúvida, estamos à disposição.",
-  ].join("\n");
-  const base = phone ? `https://wa.me/55${phone.replace(/^55/, "")}` : "https://wa.me/";
-  return `${base}?text=${encodeURIComponent(text)}`;
-}
-
-export function QuotePrintView({ order }: { order: OrderWithRelations }) {
   const sentLabel = order.quoteSentAt
     ? new Date(order.quoteSentAt).toLocaleString("pt-BR")
     : "Rascunho (não enviado)";
+
+  const validityDays = workshop.quoteValidityDays || 7;
+  const dueLabel = order.dueAt
+    ? new Date(order.dueAt).toLocaleString("pt-BR", {
+        dateStyle: "short",
+        timeStyle: "short",
+      })
+    : "a combinar";
+
+  const selected: WhatsappTemplate =
+    templates.find((t) => t.id === templateId) ?? templates[0];
+
+  const message = fillQuoteTemplate(selected?.body ?? "", {
+    customer: order.customer.name,
+    orderNumber: order.orderNumber,
+    plate: order.vehicle.plate,
+    vehicle: order.vehicle.vehicleModel,
+    total: money(order.total),
+    workshop: workshop.name,
+    validityDays,
+    dueAt: dueLabel,
+  });
+
+  const waHref = whatsappUrl(order.customer.phone, message);
 
   return (
     <div className="quote-print-root min-h-screen bg-white text-black">
@@ -53,38 +96,75 @@ export function QuotePrintView({ order }: { order: OrderWithRelations }) {
         }
       `}</style>
 
-      <div className="no-print mx-auto flex max-w-3xl flex-wrap gap-2 border-b border-gray-200 bg-gray-50 p-4">
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white"
-        >
-          Imprimir / Salvar PDF
-        </button>
-        {order.customer.phone && (
-          <a
-            href={whatsappQuoteUrl(order)}
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-lg border border-green-700 bg-green-50 px-4 py-2 text-sm font-medium text-green-900"
+      <div className="no-print mx-auto flex max-w-3xl flex-col gap-3 border-b border-gray-200 bg-gray-50 p-4">
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="rounded-sm bg-black px-4 py-2 text-sm font-medium text-white"
           >
-            Enviar no WhatsApp
-          </a>
-        )}
-        <button
-          type="button"
-          onClick={() => window.close()}
-          className="rounded-lg border border-gray-300 px-4 py-2 text-sm"
-        >
-          Fechar
-        </button>
+            Imprimir / Salvar PDF
+          </button>
+          {order.customer.phone ? (
+            <a
+              href={waHref}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-sm border border-green-700 bg-green-50 px-4 py-2 text-sm font-medium text-green-900"
+            >
+              Enviar no WhatsApp
+            </a>
+          ) : (
+            <span className="rounded-sm border border-gray-300 px-4 py-2 text-sm text-gray-500">
+              Cliente sem telefone
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => window.close()}
+            className="rounded-sm border border-gray-300 px-4 py-2 text-sm"
+          >
+            Fechar
+          </button>
+        </div>
+        <label className="block max-w-md text-xs text-gray-600">
+          Modelo WhatsApp
+          <select
+            className="mt-1 w-full rounded-sm border border-gray-300 bg-white px-3 py-2 text-sm text-black"
+            value={selected?.id}
+            onChange={(e) => setTemplateId(e.target.value)}
+          >
+            {templates.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <pre className="max-h-36 overflow-auto whitespace-pre-wrap rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-700">
+          {message}
+        </pre>
       </div>
 
       <article className="mx-auto max-w-3xl p-8 md:p-12">
         <header className="border-b-2 border-black pb-6">
-          <p className="text-sm uppercase tracking-widest text-gray-600">Oficina Mecânica</p>
-          <h1 className="mt-2 text-3xl font-bold">Orçamento #{order.orderNumber}</h1>
+          <p className="text-sm uppercase tracking-widest text-gray-600">{workshop.name}</p>
+          {(workshop.phone || workshop.email || workshop.address) && (
+            <div className="mt-2 space-y-0.5 text-xs text-gray-600">
+              {workshop.phone && <p>Tel.: {workshop.phone}</p>}
+              {workshop.email && <p>{workshop.email}</p>}
+              {workshop.address && (
+                <p className="whitespace-pre-wrap">{workshop.address}</p>
+              )}
+            </div>
+          )}
+          <h1 className="mt-4 text-3xl font-bold">Orçamento #{order.orderNumber}</h1>
           <p className="mt-1 text-sm text-gray-600">Emitido em: {sentLabel}</p>
+          {order.dueAt && (
+            <p className="mt-1 text-sm text-gray-600">
+              Prazo prometido: {dueLabel}
+            </p>
+          )}
           {order.quoteApprovedAt && (
             <p className="mt-1 text-sm font-medium text-green-800">
               Aprovado em: {new Date(order.quoteApprovedAt).toLocaleString("pt-BR")}
@@ -92,7 +172,7 @@ export function QuotePrintView({ order }: { order: OrderWithRelations }) {
           )}
         </header>
 
-        <section className="mt-8 grid gap-6 sm:grid-cols-2 text-sm">
+        <section className="mt-8 grid gap-6 text-sm sm:grid-cols-2">
           <div>
             <h2 className="mb-2 font-semibold uppercase text-gray-600">Cliente</h2>
             <p className="font-medium">{order.customer.name}</p>
@@ -109,7 +189,8 @@ export function QuotePrintView({ order }: { order: OrderWithRelations }) {
             {order.vehicle.color && <p>Cor: {order.vehicle.color}</p>}
             {order.vehicle.reportedIssue && (
               <p className="mt-2 text-gray-700">
-                <span className="font-medium">Problema relatado:</span> {order.vehicle.reportedIssue}
+                <span className="font-medium">Problema relatado:</span>{" "}
+                {order.vehicle.reportedIssue}
               </p>
             )}
           </div>
@@ -165,7 +246,7 @@ export function QuotePrintView({ order }: { order: OrderWithRelations }) {
           )}
         </section>
 
-        <section className="mt-8 ml-auto w-full max-w-xs text-sm">
+        <section className="ml-auto mt-8 w-full max-w-xs text-sm">
           <div className="flex justify-between border-b border-gray-200 py-2">
             <span>Peças</span>
             <span>{money(order.partsTotal)}</span>
@@ -187,9 +268,20 @@ export function QuotePrintView({ order }: { order: OrderWithRelations }) {
         </section>
 
         <footer className="mt-12 border-t border-gray-300 pt-6 text-xs text-gray-600">
-          <p>Validade do orçamento: 7 dias a partir da data de envio.</p>
-          <p className="mt-4">Assinatura do cliente: _________________________________________</p>
+          <p>
+            Validade do orçamento: {validityDays} dias
+            {order.quoteSentAt
+              ? ` a partir de ${new Date(order.quoteSentAt).toLocaleDateString("pt-BR")}`
+              : " a partir da data de envio"}
+            .
+          </p>
+          <p className="mt-4">
+            Assinatura do cliente: _________________________________________
+          </p>
           <p className="mt-2">Data: ____/____/________</p>
+          <p className="mt-6 text-[0.65rem] uppercase tracking-wider text-gray-400">
+            {workshop.name}
+          </p>
         </footer>
       </article>
     </div>

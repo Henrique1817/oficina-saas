@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -72,7 +72,7 @@ export function AddVehicleButton({ customerId, customerName, size = "sm" }: Prop
           />
           <form
             onSubmit={submit}
-            className="relative z-10 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl"
+            className="relative z-10 max-h-[90vh] w-full max-w-md overflow-y-auto border border-line bg-bg-panel p-6 shadow-xl"
           >
             <h2 className="mb-1 text-lg font-semibold">Novo veículo</h2>
             <p className="mb-4 text-xs text-muted-foreground">Cliente: {customerName}</p>

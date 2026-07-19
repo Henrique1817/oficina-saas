@@ -7,5 +7,5 @@ export const GET = withAuth(
     const users = await userRepository.list(ctx.organizationId);
     return apiSuccess(users);
   },
-  { roles: ["ADMIN"] },
+  { roles: ["ADMIN", "MANAGER"] },
 );

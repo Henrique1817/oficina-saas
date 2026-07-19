@@ -16,6 +16,7 @@ import {
   TrendingUp,
   CreditCard,
   HelpCircle,
+  Store,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -65,6 +66,7 @@ const links: NavLink[] = [
     roles: ["ADMIN", "MANAGER", "MECHANIC"],
   },
   { href: "/admin/users", label: "Usuários", icon: UserCog, roles: ["ADMIN"] },
+  { href: "/admin/oficina", label: "Oficina / Orçamento", icon: Store, roles: ["ADMIN"] },
   { href: "/admin/go-live", label: "Go-live", icon: Rocket, roles: ["ADMIN"] },
   {
     href: "/admin/growth",
@@ -135,7 +137,6 @@ export function Sidebar({
 
   return (
     <>
-      {/* Espaço reservado (só o rail recolhido) — o aside expandido flutua por cima */}
       <div className="w-[72px] shrink-0" aria-hidden />
       <aside
         ref={asideRef}
@@ -147,22 +148,22 @@ export function Sidebar({
             closeNav();
           }
         }}
-        className="fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden border-r border-border bg-card/95 py-4 shadow-[4px_0_24px_rgba(0,0,0,0.25)] backdrop-blur-md"
+        className="fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden border-r border-line bg-bg-elevated/95 py-4 backdrop-blur-md"
         style={{ width: COLLAPSED_W }}
       >
         <div className="mb-8 flex h-9 items-center gap-3 overflow-hidden px-4">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-sm font-bold text-accent">
+          <span className="flex size-9 shrink-0 items-center justify-center border border-signal/40 bg-signal/10 font-[family-name:var(--font-mono)] text-sm font-bold text-signal">
             O
           </span>
           <span
             ref={brandTextRef}
-            className="whitespace-nowrap text-lg font-bold tracking-tight text-accent"
+            className="whitespace-nowrap font-[family-name:var(--font-display)] text-lg font-semibold tracking-tight text-ink"
           >
             Oficina
           </span>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden px-2">
+        <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden px-2">
           {visible.map((link, i) => {
             const Icon = link.icon;
             const active =
@@ -176,15 +177,15 @@ export function Sidebar({
                 href={link.href}
                 title={link.label}
                 className={cn(
-                  "group flex h-11 items-center gap-3 rounded-lg px-2.5 text-sm transition-colors",
+                  "group flex h-11 items-center gap-3 px-2.5 text-sm transition-colors",
                   active
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    ? "border border-signal/30 bg-signal/15 text-signal"
+                    : "border border-transparent text-ink-mute hover:border-line hover:bg-bg-soft hover:text-ink",
                 )}
               >
                 <Icon
-                  className="size-[22px] shrink-0"
-                  strokeWidth={active ? 2.25 : 1.85}
+                  className="size-[20px] shrink-0"
+                  strokeWidth={active ? 2.25 : 1.7}
                   aria-hidden
                 />
                 <span

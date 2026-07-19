@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 
@@ -54,53 +55,62 @@ function LoginForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full max-w-md space-y-4 rounded-xl border border-border bg-card p-8"
+      className="relative w-full max-w-md space-y-5 border border-line bg-bg-panel p-8 md:p-10"
     >
-      <h1 className="text-2xl font-bold">Oficina</h1>
-      <p className="text-sm text-muted-foreground">Entre com suas credenciais Supabase</p>
-      {error && <p className="text-sm text-danger">{error}</p>}
-      {info && <p className="text-sm text-success">{info}</p>}
-      <input
-        type="email"
-        placeholder="E-mail"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="w-full rounded-lg border border-border bg-background px-3 py-2"
-        required
-      />
-      <input
-        type="password"
-        placeholder="Senha"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="w-full rounded-lg border border-border bg-background px-3 py-2"
-        required
-      />
+      <div>
+        <p className="eyebrow">Acesso</p>
+        <h1 className="display-lg mt-3 text-3xl text-ink">Oficina</h1>
+        <p className="mt-2 text-sm text-ink-dim">Entre para ver o chão da sua oficina.</p>
+      </div>
+      {error && <p className="text-sm text-alert">{error}</p>}
+      {info && <p className="text-sm text-ok">{info}</p>}
+      <div>
+        <label htmlFor="login-email">E-mail</label>
+        <input
+          id="login-email"
+          type="email"
+          placeholder="voce@oficina.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+      </div>
+      <div>
+        <label htmlFor="login-password">Senha</label>
+        <input
+          id="login-password"
+          type="password"
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+      </div>
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? "Entrando..." : "Entrar"}
       </Button>
       <button
         type="button"
-        className="w-full text-center text-xs text-muted-foreground hover:text-foreground hover:underline"
+        className="w-full text-center text-xs text-ink-mute hover:text-ink hover:underline"
         onClick={handleForgotPassword}
         disabled={loading}
       >
         Esqueci a senha
       </button>
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-center text-sm text-ink-mute">
         Nova oficina?{" "}
-        <a href="/signup" className="text-primary hover:underline">
+        <Link href="/signup" className="text-signal hover:underline">
           Criar conta
-        </a>
+        </Link>
       </p>
-      <p className="pt-2 text-center text-xs text-muted-foreground">
-        <a href="/termos" className="hover:text-foreground hover:underline">
+      <p className="pt-2 text-center font-[family-name:var(--font-mono)] text-[0.65rem] tracking-wider text-ink-mute">
+        <Link href="/termos" className="hover:text-ink">
           Termos
-        </a>
+        </Link>
         {" · "}
-        <a href="/privacidade" className="hover:text-foreground hover:underline">
+        <Link href="/privacidade" className="hover:text-ink">
           Privacidade
-        </a>
+        </Link>
       </p>
     </form>
   );
@@ -108,8 +118,13 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <Suspense fallback={<p className="text-muted-foreground">Carregando...</p>}>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_0%,rgba(232,146,42,0.1),transparent_60%)]"
+      />
+      <div className="grain opacity-[0.08]" aria-hidden />
+      <Suspense fallback={<p className="text-ink-mute">Carregando...</p>}>
         <LoginForm />
       </Suspense>
     </div>

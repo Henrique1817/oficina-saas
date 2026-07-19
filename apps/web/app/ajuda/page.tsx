@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import { SupportContactBanner } from "@/components/support-contact-banner";
 
 export const metadata = {
   title: "Ajuda — Oficina",
@@ -9,11 +10,11 @@ export const metadata = {
 const FAQS = [
   {
     q: "Quanto custa?",
-    a: "R$ 97 por mês ou R$ 970 por ano. Os primeiros 14 dias são grátis; o cartão é cadastrado no início e a cobrança começa depois do trial.",
+    a: "R$ 97 por mês ou R$ 970 por ano. Os primeiros 14 dias são grátis; o cartão é cadastrado no início e a cobrança começa depois do trial. Pilotos em cortesia não são cobrados até combinarmos o contrário.",
   },
   {
     q: "Vou ser cobrado na hora?",
-    a: "Não. Durante o trial o valor é R$ 0. Depois dos 14 dias o Stripe cobra automaticamente o plano escolhido.",
+    a: "Não. Durante o trial o valor é R$ 0. Depois dos 14 dias o Stripe cobra automaticamente o plano escolhido (exceto cortesia / design partner).",
   },
   {
     q: "Como convido meu mecânico?",
@@ -21,7 +22,15 @@ const FAQS = [
   },
   {
     q: "Como envio orçamento ao cliente?",
-    a: "Abra a OS → Orçamento → Imprimir/PDF ou botão WhatsApp (com telefone cadastrado no cliente).",
+    a: "Abra a OS → Orçamento → Imprimir/PDF ou botão WhatsApp (com telefone cadastrado no cliente). Em Oficina / Orçamento você edita validade e templates.",
+  },
+  {
+    q: "Como autorizo o serviço?",
+    a: "Na OS → Autorização: aceite digital ou imprimir o termo para o cliente assinar.",
+  },
+  {
+    q: "Estoque baixo / entrada rápida",
+    a: "Em Estoque use “Movimento rápido” (SKU ou nome) ou o filtro Estoque baixo. Mecânicos podem dar entrada/saída; ajuste só gerente.",
   },
   {
     q: "Esqueci a senha",
@@ -39,32 +48,38 @@ const FAQS = [
 
 export default function AjudaPage() {
   return (
-    <main className="mx-auto max-w-2xl px-6 py-12">
-      <p className="text-sm text-muted-foreground">
-        <Link href="/" className="text-primary hover:underline">
+    <main className="relative mx-auto max-w-2xl px-6 py-12">
+      <div className="grain opacity-[0.06]" aria-hidden />
+      <p className="mono-label text-ink-mute">
+        <Link href="/" className="hover:text-signal">
           ← Oficina
         </Link>
       </p>
-      <h1 className="mt-4 font-[family-name:var(--font-display)] text-4xl uppercase tracking-tight">
-        Ajuda
-      </h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Dúvidas frequentes. Se algo travar o seu dia, responda o WhatsApp de quem te convidou.
+      <h1 className="display-lg mt-4 text-4xl text-ink">Ajuda</h1>
+      <p className="mt-3 text-sm leading-relaxed text-ink-dim">
+        Dúvidas frequentes. Se algo travar o seu dia, use o atalho de suporte abaixo.
       </p>
 
-      <div className="mt-8 space-y-3">
+      <div className="mt-8">
+        <SupportContactBanner />
+      </div>
+
+      <div className="mt-6 space-y-3">
         {FAQS.map((item) => (
-          <Card key={item.q} className="space-y-2 p-4">
-            <h2 className="font-semibold">{item.q}</h2>
-            <p className="text-sm text-muted-foreground">{item.a}</p>
+          <Card key={item.q} className="space-y-2 p-5">
+            <h2 className="font-semibold tracking-tight text-ink">{item.q}</h2>
+            <p className="text-sm leading-relaxed text-ink-dim">{item.a}</p>
           </Card>
         ))}
       </div>
 
-      <p className="mt-10 text-sm text-muted-foreground">
-        Ainda sem conta?{" "}
-        <Link href="/signup" className="text-primary hover:underline">
-          Começar trial
+      <p className="mt-10 text-center text-xs text-ink-mute">
+        <Link href="/billing" className="hover:text-signal">
+          Assinatura
+        </Link>
+        {" · "}
+        <Link href="/workshop" className="hover:text-signal">
+          Voltar ao painel
         </Link>
       </p>
     </main>

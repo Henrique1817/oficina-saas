@@ -11,8 +11,20 @@ export const POST = withAuth(async (ctx, request) => {
     return apiSuccess(checkout, 201);
   } catch (e) {
     if (e instanceof Error) {
-      if (e.message === "TOOL_NOT_AVAILABLE") return apiError("Tool not available", 409);
-      if (e.message === "TOOL_ALREADY_CHECKED_OUT") return apiError("Tool already checked out", 409);
+      if (e.message === "TOOL_NOT_AVAILABLE") return apiError("Ferramenta indisponível", 409, e.message);
+      if (e.message === "TOOL_ALREADY_CHECKED_OUT") {
+        return apiError("Ferramenta já está em uso", 409, e.message);
+      }
+      if (e.message === "SERVICE_ORDER_NOT_FOUND") {
+        return apiError("Ordem de serviço não encontrada", 404, e.message);
+      }
+      if (e.message === "SERVICE_ORDER_NOT_ACTIVE") {
+        return apiError(
+          "Ferramenta só pode ser vinculada a OS aprovada ou em andamento",
+          400,
+          e.message,
+        );
+      }
     }
     throw e;
   }

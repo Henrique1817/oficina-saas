@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -69,21 +69,19 @@ export function OnboardingWizard({
   return (
     <div className="mx-auto max-w-lg space-y-6 px-6 py-12">
       <div>
-        <p className="text-xs uppercase tracking-[0.2em] text-accent">Primeiros passos</p>
-        <h1 className="mt-2 font-[family-name:var(--font-display)] text-4xl uppercase tracking-tight">
-          {organizationName}
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">Passo {step} de 4</p>
+        <p className="eyebrow text-signal">Primeiros passos</p>
+        <h1 className="display-lg mt-3 text-4xl text-ink">{organizationName}</h1>
+        <p className="mt-2 mono-label text-ink-mute">Passo {step} de 4</p>
       </div>
 
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && <p className="text-sm text-alert">{error}</p>}
 
       {step === 1 && (
-        <section className="space-y-4 rounded-xl border border-border bg-card p-5">
-          <h2 className="font-semibold">1. Oficina pronta</h2>
-          <p className="text-sm text-muted-foreground">
-            Sua oficina <strong className="text-foreground">{organizationName}</strong> já está
-            criada. Vamos configurar o time e o primeiro atendimento.
+        <section className="space-y-4 border border-line bg-bg-panel p-5">
+          <h2 className="font-semibold tracking-tight text-ink">1. Oficina pronta</h2>
+          <p className="text-sm leading-relaxed text-ink-dim">
+            Sua oficina <strong className="text-ink">{organizationName}</strong> já está criada.
+            Vamos configurar o time e o primeiro atendimento.
           </p>
           <Button type="button" onClick={() => setStep(2)}>
             Continuar
@@ -92,17 +90,19 @@ export function OnboardingWizard({
       )}
 
       {step === 2 && (
-        <section className="space-y-4 rounded-xl border border-border bg-card p-5">
-          <h2 className="font-semibold">2. Convidar um mecânico</h2>
-          <p className="text-sm text-muted-foreground">Opcional — você pode pular e fazer depois.</p>
+        <section className="space-y-4 border border-line bg-bg-panel p-5">
+          <h2 className="font-semibold tracking-tight text-ink">2. Convidar um mecânico</h2>
+          <p className="text-sm text-ink-dim">Opcional — você pode pular e fazer depois.</p>
           <form onSubmit={sendInvite} className="space-y-3">
-            <input
-              type="email"
-              placeholder="E-mail do mecânico"
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-            />
+            <div>
+              <label htmlFor="invite-email">E-mail do mecânico</label>
+              <input
+                id="invite-email"
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+              />
+            </div>
             <div className="flex flex-wrap gap-2">
               <Button type="submit" disabled={loading || !inviteEmail}>
                 {loading ? "Enviando..." : "Criar convite"}
@@ -113,7 +113,7 @@ export function OnboardingWizard({
             </div>
           </form>
           {inviteLink && (
-            <p className="break-all text-xs text-success">
+            <p className="break-all text-xs text-ok">
               Link: <a href={inviteLink}>{inviteLink}</a>
             </p>
           )}
@@ -126,31 +126,35 @@ export function OnboardingWizard({
       )}
 
       {step === 3 && (
-        <section className="space-y-4 rounded-xl border border-border bg-card p-5">
-          <h2 className="font-semibold">3. Primeiro cliente</h2>
+        <section className="space-y-4 border border-line bg-bg-panel p-5">
+          <h2 className="font-semibold tracking-tight text-ink">3. Primeiro cliente</h2>
           {hasCustomer ? (
             <>
-              <p className="text-sm text-muted-foreground">Você já tem cliente cadastrado.</p>
+              <p className="text-sm text-ink-dim">Você já tem cliente cadastrado.</p>
               <Button type="button" onClick={() => setStep(4)}>
                 Continuar
               </Button>
             </>
           ) : (
             <form onSubmit={createCustomer} className="space-y-3">
-              <input
-                required
-                minLength={2}
-                placeholder="Nome do cliente"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-              />
-              <input
-                placeholder="Telefone (opcional)"
-                value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-              />
+              <div>
+                <label htmlFor="cust-name">Nome do cliente</label>
+                <input
+                  id="cust-name"
+                  required
+                  minLength={2}
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="cust-phone">Telefone (opcional)</label>
+                <input
+                  id="cust-phone"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                />
+              </div>
               <div className="flex flex-wrap gap-2">
                 <Button type="submit" disabled={loading}>
                   {loading ? "Salvando..." : "Salvar cliente"}
@@ -165,9 +169,9 @@ export function OnboardingWizard({
       )}
 
       {step === 4 && (
-        <section className="space-y-4 rounded-xl border border-border bg-card p-5">
-          <h2 className="font-semibold">4. Primeira ordem de serviço</h2>
-          <p className="text-sm text-muted-foreground">
+        <section className="space-y-4 border border-line bg-bg-panel p-5">
+          <h2 className="font-semibold tracking-tight text-ink">4. Primeira ordem de serviço</h2>
+          <p className="text-sm leading-relaxed text-ink-dim">
             Abra uma OS para o veículo do cliente — aí o ciclo da oficina começa de verdade.
           </p>
           <div className="flex flex-wrap gap-2">

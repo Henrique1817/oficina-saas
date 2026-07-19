@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -123,7 +123,7 @@ export function AddCustomerButton({ variant = "default", className }: Props) {
           {step === "customer" ? (
             <form
               onSubmit={submitCustomer}
-              className="relative z-10 w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl"
+              className="relative z-10 w-full max-w-md border border-line bg-bg-panel p-6 shadow-xl"
             >
               <h2 className="mb-4 text-lg font-semibold">Cadastrar cliente</h2>
               {error && <p className="mb-3 text-sm text-danger">{error}</p>}
@@ -165,7 +165,7 @@ export function AddCustomerButton({ variant = "default", className }: Props) {
           ) : (
             <form
               onSubmit={submitVehicle}
-              className="relative z-10 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-xl"
+              className="relative z-10 max-h-[90vh] w-full max-w-md overflow-y-auto border border-line bg-bg-panel p-6 shadow-xl"
             >
               <h2 className="mb-1 text-lg font-semibold">Veículo do cliente</h2>
               <p className="mb-4 text-xs text-muted-foreground">

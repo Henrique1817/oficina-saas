@@ -3,6 +3,7 @@ import { Sidebar } from "./sidebar";
 import { pastDueGraceRemainingDays } from "@/server/modules/billing";
 import { PastDueBanner } from "@/components/billing/past-due-banner";
 import { ImpersonationBanner } from "@/components/billing/impersonation-banner";
+import { SupportContactBanner } from "@/components/support-contact-banner";
 
 export async function DashboardShell({ children }: { children: React.ReactNode }) {
   const { profile, role, organizationSlug, organization, impersonating } =
@@ -17,16 +18,21 @@ export async function DashboardShell({ children }: { children: React.ReactNode }
   return (
     <div className="flex min-h-screen">
       <Sidebar role={role} isPlatformAdmin={isPlatformAdmin} />
-      <main className="flex-1 overflow-auto p-8">
-        <header className="mb-6 flex items-center justify-between">
+      <main className="relative flex-1 overflow-auto px-6 py-8 md:px-10">
+        <header className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-line pb-5">
           <div>
-            <p className="text-sm text-muted-foreground">Bem-vindo · {organizationSlug}</p>
-            <p className="font-semibold">{profile.fullName}</p>
+            <p className="mono-label text-ink-mute">{organizationSlug}</p>
+            <p className="mt-1 text-lg font-semibold tracking-tight text-ink">
+              {profile.fullName}
+            </p>
           </div>
-          <span className="rounded-full bg-muted px-3 py-1 text-xs font-medium">{role}</span>
+          <span className="mono-label border border-line bg-bg-soft px-3 py-1.5 text-signal">
+            {role}
+          </span>
         </header>
         {impersonating && <ImpersonationBanner orgName={organization.name} />}
         {graceLeft !== null && graceLeft > 0 && <PastDueBanner daysLeft={graceLeft} />}
+        <SupportContactBanner compact />
         {children}
       </main>
     </div>

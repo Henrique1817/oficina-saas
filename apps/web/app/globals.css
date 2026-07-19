@@ -1,31 +1,210 @@
 @import "tailwindcss";
 
-@theme {
-  --color-background: #0f1419;
-  --color-foreground: #e7ecf3;
-  --color-card: #1a2332;
-  --color-card-foreground: #e7ecf3;
-  --color-primary: #3b82f6;
-  --color-primary-foreground: #ffffff;
-  --color-muted: #2a3544;
-  --color-muted-foreground: #94a3b8;
-  --color-accent: #f59e0b;
-  --color-border: #2a3544;
-  --color-danger: #ef4444;
-  --color-success: #22c55e;
-  --font-sans: var(--font-dm-sans), "Segoe UI", system-ui, sans-serif;
-  --font-display: var(--font-oswald), "Arial Narrow", Impact, sans-serif;
+:root {
+  /* Cinema graphite — alinhado ao marketing */
+  --bg: #050505;
+  --bg-elevated: #0c0c0c;
+  --bg-panel: #111111;
+  --bg-soft: #161616;
+  --line: #2a2a2a;
+  --line-strong: #3d3d3d;
+
+  --ink: #f4f1ec;
+  --ink-dim: #b8b3aa;
+  --ink-mute: #7a756c;
+
+  --signal: #e8922a;
+  --signal-bright: #f5a84a;
+  --signal-dim: #a86418;
+  --signal-glow: rgba(232, 146, 42, 0.22);
+
+  --ok: #b8f24a;
+  --ok-dim: #7aaa2e;
+  --alert: #e85d3a;
+
+  --radius-sm: 2px;
+  --radius: 4px;
+
+  --font-display: var(--font-space-grotesk), "Arial Narrow", sans-serif;
+  --font-mono: var(--font-space-mono), ui-monospace, monospace;
+
+  /* Aliases legados (componentes existentes) */
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --color-card: var(--bg-panel);
+  --color-card-foreground: var(--ink);
+  --color-primary: var(--signal);
+  --color-primary-foreground: var(--bg);
+  --color-muted: var(--bg-soft);
+  --color-muted-foreground: var(--ink-mute);
+  --color-accent: var(--signal);
+  --color-border: var(--line);
+  --color-danger: var(--alert);
+  --color-success: var(--ok);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-panel: var(--bg-panel);
+  --color-bg-soft: var(--bg-soft);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-dim: var(--ink-dim);
+  --color-ink-mute: var(--ink-mute);
+  --color-signal: var(--signal);
+  --color-signal-bright: var(--signal-bright);
+  --color-signal-dim: var(--signal-dim);
+  --color-ok: var(--ok);
+  --color-ok-dim: var(--ok-dim);
+  --color-alert: var(--alert);
+
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --color-card: var(--bg-panel);
+  --color-card-foreground: var(--ink);
+  --color-primary: var(--signal);
+  --color-primary-foreground: var(--bg);
+  --color-muted: var(--bg-soft);
+  --color-muted-foreground: var(--ink-mute);
+  --color-accent: var(--signal);
+  --color-border: var(--line);
+  --color-danger: var(--alert);
+  --color-success: var(--ok);
+
+  --font-sans: var(--font-space-grotesk), "Arial Narrow", sans-serif;
+  --font-display: var(--font-space-grotesk), "Arial Narrow", sans-serif;
+  --font-mono: var(--font-space-mono), ui-monospace, monospace;
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  background: var(--bg);
+}
+
 body {
-  background: var(--color-background);
-  color: var(--color-foreground);
-  font-family: var(--font-sans);
+  margin: 0;
   min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-feature-settings: "ss01" on, "kern" on;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--signal);
+  color: var(--bg);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+.display-lg {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
+.mono-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.grain {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.07;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.hairline {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--line-strong) 20%,
+    var(--line-strong) 80%,
+    transparent
+  );
+}
+
+.app-surface {
+  position: relative;
+  isolation: isolate;
+}
+
+.app-surface::before {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 80% 50% at 90% -10%, rgba(232, 146, 42, 0.08), transparent 55%),
+    radial-gradient(ellipse 60% 40% at -5% 100%, rgba(184, 242, 74, 0.04), transparent 50%),
+    var(--bg);
+}
+
+/* Formulários — look industrial */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--ink);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.85rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):focus,
+select:focus,
+textarea:focus {
+  border-color: var(--signal);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--ink-mute);
+}
+
+label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 0.4rem;
 }
 
 @keyframes landing-rise {
@@ -36,25 +215,6 @@ body {
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes landing-sheen {
-  0% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 100% 50%;
-  }
-}
-
-@keyframes landing-pulse-line {
-  0%,
-  100% {
-    opacity: 0.35;
-  }
-  50% {
-    opacity: 0.85;
   }
 }
 
@@ -70,11 +230,12 @@ body {
   animation: landing-rise 0.9s ease-out 0.3s both;
 }
 
-.landing-sheen {
-  background-size: 200% 200%;
-  animation: landing-sheen 14s ease-in-out infinite alternate;
-}
-
-.landing-pulse-line {
-  animation: landing-pulse-line 3.2s ease-in-out infinite;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api-client";
@@ -20,6 +21,13 @@ type VehicleRow = {
   reportedIssue: string | null;
 };
 
+type TeamMember = {
+  id: string;
+  fullName: string;
+  role: string;
+  active: boolean;
+};
+
 function vehicleLabel(v: VehicleRow) {
   const bits = [
     v.plate,
@@ -30,13 +38,28 @@ function vehicleLabel(v: VehicleRow) {
   return bits.join(" · ");
 }
 
-export function CreateServiceOrderForm() {
+function toDatetimeLocalValue(d: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+export function CreateServiceOrderForm({
+  initialCustomerId = "",
+  initialVehicleId = "",
+}: {
+  initialCustomerId?: string;
+  initialVehicleId?: string;
+}) {
   const router = useRouter();
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
   const [vehicles, setVehicles] = useState<VehicleRow[]>([]);
-  const [customerId, setCustomerId] = useState("");
-  const [vehicleId, setVehicleId] = useState("");
+  const [team, setTeam] = useState<TeamMember[]>([]);
+  const [customerId, setCustomerId] = useState(initialCustomerId);
+  const [vehicleId, setVehicleId] = useState(initialVehicleId);
+  const [assignedMechanicId, setAssignedMechanicId] = useState("");
   const [description, setDescription] = useState("");
+  const [internalNotes, setInternalNotes] = useState("");
+  const [dueAt, setDueAt] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingCustomers, setLoadingCustomers] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,16 +72,32 @@ export function CreateServiceOrderForm() {
   const [newReportedIssue, setNewReportedIssue] = useState("");
   const [newVehicleLoading, setNewVehicleLoading] = useState(false);
 
+  const selectedVehicle = useMemo(
+    () => vehicles.find((v) => v.id === vehicleId) ?? null,
+    [vehicles, vehicleId],
+  );
+
+  const mechanics = useMemo(
+    () => team.filter((u) => u.active && ["MECHANIC", "MANAGER", "ADMIN"].includes(u.role)),
+    [team],
+  );
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await apiFetch<{
-          data: CustomerRow[];
-          nextCursor: string | null;
-          hasMore: boolean;
-        }>("/api/v1/customers?limit=100");
-        if (!cancelled) setCustomers(res.data ?? []);
+        const [custRes, users] = await Promise.all([
+          apiFetch<{
+            data: CustomerRow[];
+            nextCursor: string | null;
+            hasMore: boolean;
+          }>("/api/v1/customers?limit=100"),
+          apiFetch<TeamMember[]>("/api/v1/users").catch(() => [] as TeamMember[]),
+        ]);
+        if (!cancelled) {
+          setCustomers(custRes.data ?? []);
+          setTeam(Array.isArray(users) ? users : []);
+        }
       } catch {
         if (!cancelled) setError("Não foi possível carregar clientes");
       } finally {
@@ -81,8 +120,11 @@ export function CreateServiceOrderForm() {
       try {
         const list = await apiFetch<VehicleRow[]>(`/api/v1/vehicles?customerId=${customerId}`);
         if (!cancelled) {
-          setVehicles(Array.isArray(list) ? list : []);
-          setVehicleId("");
+          const rows = Array.isArray(list) ? list : [];
+          setVehicles(rows);
+          setVehicleId((current) =>
+            current && rows.some((v) => v.id === current) ? current : "",
+          );
         }
       } catch {
         if (!cancelled) setVehicles([]);
@@ -92,6 +134,11 @@ export function CreateServiceOrderForm() {
       cancelled = true;
     };
   }, [customerId]);
+
+  useEffect(() => {
+    if (!selectedVehicle?.reportedIssue) return;
+    setDescription((prev) => (prev.trim() ? prev : selectedVehicle.reportedIssue!));
+  }, [selectedVehicle]);
 
   async function addVehicleClick() {
     if (!customerId || !newPlate.trim() || !newModel.trim()) return;
@@ -139,6 +186,9 @@ export function CreateServiceOrderForm() {
           customerId,
           vehicleId,
           description: description.trim() || undefined,
+          internalNotes: internalNotes.trim() || undefined,
+          assignedMechanicId: assignedMechanicId || undefined,
+          dueAt: dueAt ? new Date(dueAt).toISOString() : undefined,
         }),
       });
       router.push(`/workshop/service-orders/${order.id}`);
@@ -151,18 +201,32 @@ export function CreateServiceOrderForm() {
   }
 
   if (loadingCustomers) {
-    return <p className="text-muted-foreground">Carregando clientes...</p>;
+    return <p className="text-ink-mute">Carregando clientes...</p>;
   }
 
   return (
-    <form onSubmit={submit} className="max-w-lg space-y-4">
-      {error && <p className="text-sm text-danger">{error}</p>}
+    <form onSubmit={submit} className="max-w-xl space-y-5 border border-line bg-bg-panel p-6 md:p-8">
+      {error && <p className="text-sm text-alert">{error}</p>}
 
-      <label className="block text-sm">
-        Cliente *
+      {customers.length === 0 && (
+        <p className="border border-signal/40 bg-signal/10 px-3 py-2 text-sm text-ink-dim">
+          Nenhum cliente cadastrado.{" "}
+          <Link href="/manager/customers" className="font-semibold text-signal hover:underline">
+            Cadastrar cliente
+          </Link>
+        </p>
+      )}
+
+      <div>
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <label htmlFor="os-customer">Cliente *</label>
+          <Link href="/manager/customers" className="text-xs text-signal hover:underline">
+            + Novo cliente
+          </Link>
+        </div>
         <select
+          id="os-customer"
           required
-          className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2"
           value={customerId}
           onChange={(e) => setCustomerId(e.target.value)}
         >
@@ -174,15 +238,15 @@ export function CreateServiceOrderForm() {
             </option>
           ))}
         </select>
-      </label>
+      </div>
 
       {customerId && (
         <>
-          <label className="block text-sm">
-            Veículo *
+          <div>
+            <label htmlFor="os-vehicle">Veículo *</label>
             <select
+              id="os-vehicle"
               required
-              className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2"
               value={vehicleId}
               onChange={(e) => setVehicleId(e.target.value)}
             >
@@ -193,68 +257,78 @@ export function CreateServiceOrderForm() {
                 </option>
               ))}
             </select>
-          </label>
+          </div>
+
+          {selectedVehicle?.reportedIssue && (
+            <div className="border border-line bg-bg/60 px-4 py-3">
+              <p className="mono-label text-ink-mute">Problema do veículo</p>
+              <p className="mt-2 whitespace-pre-wrap text-sm text-ink-dim">
+                {selectedVehicle.reportedIssue}
+              </p>
+            </div>
+          )}
 
           <button
             type="button"
-            className="text-sm text-primary underline"
+            className="text-sm text-signal underline-offset-2 hover:underline"
             onClick={() => setShowNewVehicle((s) => !s)}
           >
             {showNewVehicle ? "Cancelar novo veículo" : "+ Cadastrar veículo deste cliente"}
           </button>
 
           {showNewVehicle && (
-            <div className="space-y-3 rounded-lg border border-border p-4">
-              <p className="text-sm text-muted-foreground">Novo veículo do cliente</p>
-              <label className="block text-sm">
-                Placa *
+            <div className="space-y-3 border border-line p-4">
+              <p className="mono-label text-ink-mute">Novo veículo</p>
+              <div>
+                <label htmlFor="new-plate">Placa *</label>
                 <input
+                  id="new-plate"
                   required={showNewVehicle}
-                  className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 uppercase"
+                  className="uppercase"
                   value={newPlate}
                   onChange={(e) => setNewPlate(e.target.value)}
                 />
-              </label>
-              <label className="block text-sm">
-                Modelo *
+              </div>
+              <div>
+                <label htmlFor="new-model">Modelo *</label>
                 <input
+                  id="new-model"
                   required={showNewVehicle}
                   placeholder="Marca / modelo"
-                  className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2"
                   value={newModel}
                   onChange={(e) => setNewModel(e.target.value)}
                 />
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <label className="block text-sm">
-                  Ano
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="new-year">Ano</label>
                   <input
+                    id="new-year"
                     type="number"
                     min={1900}
                     max={2100}
-                    className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2"
                     value={newYear}
                     onChange={(e) => setNewYear(e.target.value)}
                   />
-                </label>
-                <label className="block text-sm">
-                  Cor
+                </div>
+                <div>
+                  <label htmlFor="new-color">Cor</label>
                   <input
-                    className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2"
+                    id="new-color"
                     value={newColor}
                     onChange={(e) => setNewColor(e.target.value)}
                   />
-                </label>
+                </div>
               </div>
-              <label className="block text-sm">
-                Problema apresentado
+              <div>
+                <label htmlFor="new-issue">Problema apresentado</label>
                 <textarea
+                  id="new-issue"
                   rows={2}
-                  className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2"
                   value={newReportedIssue}
                   onChange={(e) => setNewReportedIssue(e.target.value)}
                 />
-              </label>
+              </div>
               <Button type="button" disabled={newVehicleLoading} onClick={() => void addVehicleClick()}>
                 {newVehicleLoading ? "Salvando..." : "Adicionar veículo"}
               </Button>
@@ -263,19 +337,57 @@ export function CreateServiceOrderForm() {
         </>
       )}
 
-      <label className="block text-sm">
-        Descrição da ordem de serviço
+      <div>
+        <label htmlFor="os-mechanic">Mecânico responsável</label>
+        <select
+          id="os-mechanic"
+          value={assignedMechanicId}
+          onChange={(e) => setAssignedMechanicId(e.target.value)}
+        >
+          <option value="">Sem atribuição</option>
+          {mechanics.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.fullName} ({m.role})
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label htmlFor="os-due">Prazo prometido</label>
+        <input
+          id="os-due"
+          type="datetime-local"
+          value={dueAt}
+          onChange={(e) => setDueAt(e.target.value)}
+          min={toDatetimeLocalValue(new Date())}
+        />
+      </div>
+
+      <div>
+        <label htmlFor="os-desc">Descrição do serviço</label>
         <textarea
-          className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2"
+          id="os-desc"
           rows={3}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Serviços a realizar nesta OS"
         />
-      </label>
+      </div>
 
-      <div className="flex gap-2">
-        <Button type="submit" disabled={loading}>
+      <div>
+        <label htmlFor="os-notes">Notas internas</label>
+        <textarea
+          id="os-notes"
+          rows={2}
+          value={internalNotes}
+          onChange={(e) => setInternalNotes(e.target.value)}
+          placeholder="Só a equipe vê — não vai no orçamento ao cliente"
+        />
+      </div>
+
+      <div className="flex flex-wrap gap-2 pt-2">
+        <Button type="submit" disabled={loading || customers.length === 0}>
           {loading ? "Criando..." : "Criar ordem de serviço"}
         </Button>
         <Button type="button" variant="secondary" onClick={() => router.back()}>

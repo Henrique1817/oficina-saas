@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -45,7 +45,7 @@ export function InviteUserButton() {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3 rounded-xl border border-border bg-card p-4">
+    <form onSubmit={submit} className="space-y-3 border border-line bg-bg-panel p-4">
       <h2 className="font-semibold">Novo convite</h2>
       {error && <p className="text-sm text-danger">{error}</p>}
       {link && (

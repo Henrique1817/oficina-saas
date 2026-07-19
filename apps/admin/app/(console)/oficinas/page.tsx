@@ -118,6 +118,11 @@ export default async function OficinasPage({
                       Cortesia
                     </span>
                   )}
+                  {o.designPartner && (
+                    <span className="ml-2 rounded bg-primary/20 px-1.5 py-0.5 text-[10px] text-primary">
+                      Piloto
+                    </span>
+                  )}
                 </td>
                 <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">{o.slug}</td>
                 <td className="px-4 py-2.5">

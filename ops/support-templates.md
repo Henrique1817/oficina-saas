@@ -28,4 +28,15 @@ Se a mesma dúvida aparecer 3× → vira item em `/ajuda` e aqui.
 ## Estoque
 
 **P:** Não consigo dar entrada.  
-**R:** Em Peças → “+ Estoque”. Se não houver local, avise o suporte (novas oficinas já nascem com “Oficina Principal”).
+**R:** Em Estoque → “Movimento rápido” ou “Mov.” na linha. Locais: novas oficinas já nascem com “Oficina Principal”.
+
+**P:** Aparece estoque baixo.  
+**R:** Em Estoque use o filtro “Estoque baixo” ou o banner. Ajuste o mínimo na peça.
+
+## Soft launch / piloto
+
+**P:** Sou design partner — preciso de cartão?  
+**R:** Não enquanto estiver em cortesia. Use o link de convite que mandamos no WhatsApp. Dúvidas: atalho Suporte no sistema.
+
+**P:** Como falo com vocês?  
+**R:** Faixa “Suporte” no topo do painel (WhatsApp/e-mail) ou /ajuda.

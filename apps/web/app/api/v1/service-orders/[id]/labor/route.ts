@@ -14,6 +14,21 @@ export const POST = withAuth(async (ctx, request) => {
 
   const parsed = await parseJson(request, serviceOrderLaborSchema);
   if ("error" in parsed) return parsed.error;
-  const updated = await serviceOrderRepository.addLabor(ctx.organizationId, getId(request), parsed.data);
-  return apiSuccess(updated, 201);
+  try {
+    const updated = await serviceOrderRepository.addLabor(
+      ctx.organizationId,
+      getId(request),
+      parsed.data,
+    );
+    return apiSuccess(updated, 201);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "";
+    if (msg === "LABOR_ONLY_DRAFT") {
+      return apiError("Mão de obra só pode ser adicionada em rascunho", 400, msg);
+    }
+    if (msg === "QUOTE_LOCKED") {
+      return apiError("Orçamento enviado — edite após reprovar ou cancele o envio", 400, msg);
+    }
+    throw err;
+  }
 }, { roles: ["ADMIN", "MANAGER", "MECHANIC"] });
