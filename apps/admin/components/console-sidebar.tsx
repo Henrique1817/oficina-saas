@@ -15,6 +15,7 @@ import {
   ScrollText,
   LogOut,
   Rocket,
+  GitBranch,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,7 @@ const links: { href: string; label: string; icon: LucideIcon; exact?: boolean }[
   { href: "/pilotos", label: "Pilotos", icon: Rocket },
   { href: "/pagamentos", label: "Pagamentos", icon: CreditCard },
   { href: "/saude", label: "Saúde", icon: Activity },
+  { href: "/pipelines", label: "Pipelines", icon: GitBranch },
   { href: "/suporte", label: "Suporte", icon: LifeBuoy },
   { href: "/audit", label: "Audit", icon: ScrollText },
   { href: "/equipe", label: "Equipe", icon: Users },

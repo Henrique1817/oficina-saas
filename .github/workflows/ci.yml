@@ -1,0 +1,119 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint · typecheck · tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PIPELINE_INGEST_URL: ${{ secrets.PIPELINE_INGEST_URL }}
+      PIPELINE_INGEST_SECRET: ${{ secrets.PIPELINE_INGEST_SECRET }}
+      # Placeholders para generate/typecheck sem secrets de prod
+      DATABASE_URL: postgresql://user:pass@localhost:5432/oficina?schema=public
+      DIRECT_URL: postgresql://user:pass@localhost:5432/oficina?schema=public
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.placeholder
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.placeholder
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      CRON_SECRET: ci-cron-secret-placeholder-32chars
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Pipeline run (start)
+        if: always()
+        continue-on-error: true
+        run: node scripts/pipeline-report.mjs run --status RUNNING
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
+
+      - name: Lint
+        id: lint
+        run: pnpm lint
+        continue-on-error: true
+
+      - name: Report lint
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ "${{ steps.lint.outcome }}" = "success" ]; then
+            node scripts/pipeline-report.mjs step --name lint --status SUCCESS --order 1
+          else
+            node scripts/pipeline-report.mjs step --name lint --status FAILURE --order 1 --log "pnpm lint falhou"
+            exit 1
+          fi
+
+      - name: Typecheck
+        id: typecheck
+        run: pnpm typecheck
+        continue-on-error: true
+
+      - name: Report typecheck
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ "${{ steps.typecheck.outcome }}" = "success" ]; then
+            node scripts/pipeline-report.mjs step --name typecheck --status SUCCESS --order 2
+          else
+            node scripts/pipeline-report.mjs step --name typecheck --status FAILURE --order 2 --log "pnpm typecheck falhou"
+            exit 1
+          fi
+
+      - name: Unit + API contracts
+        id: test
+        run: pnpm test
+        continue-on-error: true
+
+      - name: Report tests
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ "${{ steps.test.outcome }}" = "success" ]; then
+            node scripts/pipeline-report.mjs step --name unit-api-tests --status SUCCESS --order 3
+          else
+            node scripts/pipeline-report.mjs step --name unit-api-tests --status FAILURE --order 3 --log "pnpm test falhou"
+            exit 1
+          fi
+
+      - name: Pipeline run (finish)
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ "${{ steps.lint.outcome }}" = "success" ] && [ "${{ steps.typecheck.outcome }}" = "success" ] && [ "${{ steps.test.outcome }}" = "success" ]; then
+            node scripts/pipeline-report.mjs run --status SUCCESS --finished
+          else
+            node scripts/pipeline-report.mjs run --status FAILURE --finished
+          fi
+
+      - name: Gate
+        if: always()
+        run: |
+          if [ "${{ steps.lint.outcome }}" != "success" ] || [ "${{ steps.typecheck.outcome }}" != "success" ] || [ "${{ steps.test.outcome }}" != "success" ]; then
+            echo "CI falhou"
+            exit 1
+          fi

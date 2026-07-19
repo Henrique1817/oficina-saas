@@ -32,6 +32,7 @@ docker compose up -d --build
 - Oficinas: `/oficinas`
 - Pagamentos: `/pagamentos`
 - Saúde: `/saude`
+- Pipelines (CI/CD logs): `/pipelines`
 - Suporte: `/suporte`
 - Audit: `/audit`
 - Equipe: `/equipe`

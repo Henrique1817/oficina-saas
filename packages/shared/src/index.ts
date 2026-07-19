@@ -7,5 +7,6 @@ export * from "./schemas/service-order";
 export * from "./schemas/user";
 export * from "./schemas/invite";
 export * from "./schemas/organization";
+export * from "./schemas/pipeline";
 export * from "./api";
 export * from "./access-policy";
