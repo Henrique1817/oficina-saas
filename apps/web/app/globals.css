@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #0f1419;
+  --color-foreground: #e7ecf3;
+  --color-card: #1a2332;
+  --color-card-foreground: #e7ecf3;
+  --color-primary: #3b82f6;
+  --color-primary-foreground: #ffffff;
+  --color-muted: #2a3544;
+  --color-muted-foreground: #94a3b8;
+  --color-accent: #f59e0b;
+  --color-border: #2a3544;
+  --color-danger: #ef4444;
+  --color-success: #22c55e;
+  --font-sans: var(--font-dm-sans), "Segoe UI", system-ui, sans-serif;
+  --font-display: var(--font-oswald), "Arial Narrow", Impact, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+}
+
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes landing-sheen {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes landing-pulse-line {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.landing-rise {
+  animation: landing-rise 0.8s ease-out both;
+}
+
+.landing-rise-delay {
+  animation: landing-rise 0.9s ease-out 0.15s both;
+}
+
+.landing-rise-delay-2 {
+  animation: landing-rise 0.9s ease-out 0.3s both;
+}
+
+.landing-sheen {
+  background-size: 200% 200%;
+  animation: landing-sheen 14s ease-in-out infinite alternate;
+}
+
+.landing-pulse-line {
+  animation: landing-pulse-line 3.2s ease-in-out infinite;
+}

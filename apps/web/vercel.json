@@ -1,0 +1,20 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "cd ../.. && pnpm install",
+  "buildCommand": "cd ../.. && pnpm db:generate && pnpm --filter @oficina/web build",
+  "framework": "nextjs",
+  "crons": [
+    {
+      "path": "/api/v1/cron/low-stock",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/v1/cron/trial-ending",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/v1/cron/dunning",
+      "schedule": "0 10 * * *"
+    }
+  ]
+}

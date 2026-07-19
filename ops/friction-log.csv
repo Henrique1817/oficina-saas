@@ -1,0 +1,3 @@
+date,partner_or_self,area,description,blocks_renewal,severity,status
+2026-07-18,self,estoque,PATCH peca + entrada de estoque na UI,sim,P0,fixed
+2026-07-18,self,onboarding,Nova org sem StockLocation quebrava entrada de estoque,sim,P0,fixed

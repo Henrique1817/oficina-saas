@@ -1,0 +1,67 @@
+# syntax=docker/dockerfile:1
+
+# Oficina Console (apps/admin) — porta 3001
+ARG NODE_VERSION=20
+
+FROM node:${NODE_VERSION}-bookworm-slim AS base
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+WORKDIR /app
+
+FROM base AS deps
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY apps/web/package.json ./apps/web/
+COPY apps/admin/package.json ./apps/admin/
+COPY packages/database/package.json ./packages/database/
+COPY packages/auth/package.json ./packages/auth/
+COPY packages/shared/package.json ./packages/shared/
+RUN pnpm install --frozen-lockfile
+
+FROM deps AS builder
+COPY . .
+
+ENV DATABASE_URL="postgresql://build:build@127.0.0.1:5432/build?schema=public"
+ENV DIRECT_URL="postgresql://build:build@127.0.0.1:5432/build?schema=public"
+
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ARG NEXT_PUBLIC_APP_URL=http://localhost:3001
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
+
+RUN pnpm --filter @oficina/database db:generate \
+  && pnpm --filter @oficina/admin build \
+  && CLIENT_SRC=$(find /app/node_modules/.pnpm -type d -path "*/node_modules/.prisma/client" | head -1) \
+  && if [ -z "$CLIENT_SRC" ]; then echo "Prisma .prisma/client not found" >&2; exit 1; fi \
+  && PNPM_PKG=$(echo "$CLIENT_SRC" | sed -n 's|.*/\.pnpm/\(@prisma+client@[^/]*\)/.*|\1|p') \
+  && DEST="/app/apps/admin/.next/standalone/node_modules/.pnpm/${PNPM_PKG}/node_modules" \
+  && mkdir -p "$DEST" \
+  && cp -a "$(dirname "$CLIENT_SRC")" "$DEST/" \
+  && echo "Copied Prisma engines via $PNPM_PKG"
+
+FROM base AS runner
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3001
+ENV HOSTNAME=0.0.0.0
+
+RUN groupadd --system --gid 1001 nodejs \
+  && useradd --system --uid 1001 --gid nodejs nextjs
+
+WORKDIR /app
+
+COPY --from=builder --chown=nextjs:nodejs /app/apps/admin/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/admin/.next/static ./apps/admin/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/apps/admin/public ./apps/admin/public
+
+USER nextjs
+EXPOSE 3001
+WORKDIR /app/apps/admin
+CMD ["node", "server.js"]

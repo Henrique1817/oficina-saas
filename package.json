@@ -1,0 +1,30 @@
+{
+  "name": "oficina",
+  "private": true,
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "db:generate": "turbo db:generate",
+    "db:migrate": "pnpm --filter @oficina/database db:migrate",
+    "db:push": "pnpm --filter @oficina/database db:push",
+    "db:seed": "pnpm --filter @oficina/database db:seed",
+    "db:studio": "pnpm --filter @oficina/database db:studio",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d --build",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "dev:web": "pnpm --filter @oficina/web dev",
+    "dev:admin": "pnpm --filter @oficina/admin dev"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3",
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=20"
+  }
+}
