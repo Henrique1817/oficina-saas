@@ -1,258 +1,236 @@
-# Oficina — Sistema de Gestão Mecânica
+# Oficina
 
-Monorepo TypeScript ([Turborepo](https://turbo.build)) com **Next.js 15** (interface + API REST), **PostgreSQL** no **Supabase** via **Prisma**, autenticação **Supabase Auth** e **RBAC** (Admin, Gerente, Mecânico).
+**A oficina no controle — OS, estoque e orçamento sem planilha.**
 
-Este documento descreve **fluxo de dados**, **pastas**, **papéis** e como as peças se conectam.
+SaaS multi-tenant para oficinas mecânicas brasileiras. Cada oficina tem seu ambiente isolado: clientes, veículos, peças, ferramentas e ordens de serviço em um só lugar — com assinatura Stripe, trial de 14 dias e um console interno para a equipe da plataforma operar, sustentar e crescer.
 
----
-
-## Visão geral do domínio
-
-O sistema cobre o ciclo de uma oficina:
-
-1. **Cadastros** — clientes, veículos (placa, modelo, ano, cor, problema relatado), variantes de veículo para *fitment* de peças.
-2. **Estoque** — peças, locais, quantidades, movimentos (entrada/saída/ajuste/consumo por OS).
-3. **Ordens de serviço (OS)** — máquina de estados, linhas (peça/serviço), mão de obra, vínculo com cliente/veículo e mecânico.
-4. **Ferramentas** — patrimônio, retirada/devolução, manutenção.
-5. **Usuários** — perfil espelhado em `profiles` com papel (`UserRole`).
+| | |
+|---|---|
+| **Para quem** | Oficinas pequenas e médias que ainda vivem de planilha, WhatsApp e caderno |
+| **Modelo** | SaaS B2B — **R$ 97/mês** ou **R$ 970/ano** |
+| **Trial** | 14 dias grátis (cartão no cadastro; cobrança só após o trial) |
+| **Apps** | Produto do tenant (`apps/web`) + console da plataforma (`apps/admin`) |
 
 ---
 
-## Estrutura do monorepo
+## Por que vender a Oficina
 
-| Pasta | Pacote | Função |
-|-------|--------|--------|
-| `apps/web` | `@oficina/web` | Next.js App Router, páginas, componentes client/server, **Route Handlers** em `app/api/v1/*`, `middleware.ts`. |
-| `packages/database` | `@oficina/database` | `schema.prisma`, migrações, `seed.ts`, export do **Prisma Client** (`src/index.ts`). |
-| `packages/shared` | `@oficina/shared` | Schemas **Zod**, helpers de resposta HTTP (`apiSuccess` / `apiError`), tipos compartilhados. |
-| `packages/auth` | `@oficina/auth` | `withAuth`, `resolveAuth`, mapa de rotas → papéis (`ROUTE_ROLE_MAP`), utilitários de papel. |
-
-Comandos raiz (`package.json`): `pnpm dev` (turbo), `pnpm build`, `pnpm db:generate`, `pnpm db:migrate`, `pnpm db:seed`, etc.
-
-O **cliente Prisma** é gerado a partir de `packages/database` e consumido pelo app e pela camada de repositórios.
+1. **Resolve o dia a dia da oficina** — não é só CRM: fecha o ciclo cadastro → orçamento → OS → estoque → ferramenta.
+2. **Produto SaaS de verdade** — multi-tenant, billing, dunning, invites, onboarding e gate de assinatura (páginas + API).
+3. **Operação escalável** — console de plataforma com suporte, auditoria, impersonação, MRR e saúde do negócio.
+4. **Stack moderna e deployável** — Next.js 15, Supabase, Prisma, Stripe, Docker / Vercel.
+5. **Pronto para soft launch** — fluxo de signup, trial, checklist go-live e automações (estoque baixo, fim de trial, cobrança).
 
 ---
 
-## Árvore conceitual (o que importa no dia a dia)
+## O que o cliente (oficina) ganha
 
-```
-Oficina/
-├── apps/web/
-│   ├── app/                          # App Router
-│   │   ├── (auth)/login/             # Login Supabase (sessão em cookie)
-│   │   ├── admin/                    # Área ADMIN (ex.: usuários)
-│   │   ├── manager/                  # Gestão: clientes, peças, …
-│   │   ├── workshop/                 # Oficina: OS, ferramentas, dashboard
-│   │   ├── api/v1/                   # REST: um route.ts por recurso (ou segment)
-│   │   ├── layout.tsx, page.tsx, globals.css
-│   │   └── unauthorized/page.tsx
-│   ├── components/                   # UI: actions (botões + modais), layout, ui (primitivos)
-│   ├── lib/                          # api-client (Bearer), supabase (client/server/middleware), utils
-│   ├── middleware.ts                 # Sessão + RBAC por prefixo de URL
-│   └── server/
-│       ├── lib/parse.ts              # parseJson / query Zod nas rotas API
-│       └── modules/                  # *repository.ts — único acesso Prisma por domínio
-│           ├── customers/
-│           ├── vehicles/
-│           ├── service-orders/
-│           ├── inventory/
-│           ├── tools/
-│           └── users/
-├── packages/database/prisma/
-│   ├── schema.prisma
-│   ├── migrations/
-│   └── seed.ts
-├── packages/shared/src/
-│   ├── schemas/                      # customer, vehicle, part, tool, service-order, user
-│   └── api.ts
-└── packages/auth/src/
-    ├── with-auth.ts                  # API: valida Bearer + Profile no Prisma
-    ├── roles.ts                      # prefixos /admin, /manager, /workshop
-    └── types.ts
-```
+### Dashboard operacional
+Visão rápida de OS abertas, estoque baixo, ferramentas em uso e clientes — com atalhos para as ações do dia.
 
-Arquivos de ambiente: `.env.example` na raiz (variáveis usadas por Prisma e Next); o app carrega ENV da raiz conforme `next.config.ts`.
+### Clientes e veículos
+Cadastro de clientes com veículos (placa, modelo, ano, problema relatado). Variantes de veículo e *fitment* de peças no modelo de dados, para o catálogo “servir” no carro certo.
+
+### Ordens de serviço (OS)
+Máquina de estados completa: rascunho → aprovada → em execução → concluída → faturada / cancelada. Linhas de peça e serviço, mão de obra, mecânico responsável e histórico de status.
+
+### Orçamento que vende
+Orçamento por OS com envio/aprovação/rejeição, visualização para impressão/PDF e atalho para WhatsApp — o que o mecânico e o dono já usam para fechar serviço.
+
+### Estoque de peças
+Catálogo, locais de estoque, movimentos (entrada, saída, ajuste, consumo na OS) e alerta de estoque baixo (cron + e-mail).
+
+### Controle de ferramentas
+Patrimônio da oficina: retirada, devolução e manutenção — menos “ferramenta sumiu”.
+
+### Equipe e convites
+Papéis **Admin**, **Gerente** e **Mecânico**. O admin convida a equipe por link (e-mail opcional via Resend). Mecânico opera com restrições sensatas (ex.: OS atribuída).
+
+### Assinatura e self-serve
+Checkout Stripe, Customer Portal, status de plano (trial / ativo / inadimplente / cancelado). Sem plano válido (após grace de 3 dias em `PAST_DUE`), o app e a API param — o dono vai para `/billing` e regulariza.
+
+### Onboarding e go-live
+Criação da oficina, setup guiado e checklist de prontidão (dados, Stripe, primeira OS faturada) para a oficina começar a usar de verdade.
+
+### Ajuda e landing
+Landing comercial, FAQ de preços/trial (`/ajuda`), login/signup e páginas legais (`/termos`, `/privacidade`).
 
 ---
 
-## Fluxo de dados (ponta a ponta)
+## O que a equipe da plataforma ganha (`apps/admin`)
 
-### 1. Navegador → páginas (Server Components)
+Console separado (porta **3001** em local) para quem vende e sustenta o produto — não misturado com a UI da oficina.
 
-1. O pedido passa por **`middleware.ts`**: renova sessão Supabase (`updateSession`), exige login nas rotas protegidas e, para `/admin`, `/manager` e `/workshop`, consulta a tabela **`profiles`** via **service role** para checar `role` e `active`.
-2. **Layouts** (`admin/layout.tsx`, `manager/layout.tsx`, `workshop/layout.tsx`) costumam usar **`DashboardShell`**, que garante `Profile` no Prisma (cria MECHANIC padrão se faltar).
-3. **Páginas** (ex.: `manager/customers/page.tsx`) importam **`prisma`** de `@oficina/database` e leem dados diretamente no servidor (sem passar pela REST), ou redirecionam se não autenticado.
+| Módulo | Facilidade |
+|--------|------------|
+| **Overview** | Panorama operacional da base |
+| **Oficinas** | Busca, detalhe, suspensão/reativação, extensão de trial, nota interna, link Stripe |
+| **Impersonação** | Entrar na conta do tenant (token único + banner + auditoria) para suporte real |
+| **Pagamentos** | MRR estimado, filas PAST_DUE, trials acabando, **cortesia** (`billingExempt`) |
+| **Saúde** | Signups, conversão trial→pago, volume de OS, status dos crons; export CSV de métricas |
+| **Suporte** | Lookup por e-mail, nome, slug ou ID Stripe + timeline da oficina |
+| **Auditoria** | Log global de ações sensíveis (suspender, impersonar, trial, cortesia, equipe) |
+| **Equipe** | RBAC interno: **Owner**, **Support**, **Finance**, **Viewer** |
 
-### 2. Navegador → API JSON (`/api/v1/*`)
-
-1. Componentes **client** (`"use client"`) usam **`apiFetch`** (`lib/api-client.ts`): obtém **sessão Supabase** no browser e envia `Authorization: Bearer <access_token>`.
-2. O **Route Handler** importa **`withAuth`** de `@oficina/auth`: **`resolveAuth`** valida o JWT com Supabase Admin, carrega **`Profile`** no Prisma (criação “lazy” igual ao shell, se necessário), e opcionalmente restringe **`roles`**.
-3. Entrada é validada com schemas **`@oficina/shared`** via **`parseJson`** / **`parseSearchParams`** (`server/lib/parse.ts`).
-4. O handler chama um **`repository`** em `server/modules/*` que executa **`prisma.*`**.
-5. Resposta: **`Response.json(...)`** — corpo direto do recurso (sem wrapper `{ data }`), erros `{ error, code? }`.
-
-Assim, há **dois caminhos de leitura**: Server Component → Prisma; Client → REST → withAuth → Repository → Prisma. Escrita a partir do browser passa quase sempre pela **API v1** + Zod.
-
-### 3. Banco de dados
-
-- **Prisma** usa `DATABASE_URL` e `DIRECT_URL` (Postgres Supabase).
-- Migrações versionadas em `packages/database/prisma/migrations/`.
-- **Seed**: `pnpm db:seed` popula dados de desenvolvimento.
+Hardening do console: cookie de sessão próprio, rate limit, CSP, allowlist de e-mails e (opcional) IPs.
 
 ---
 
-## Modelo de dados (relacionamentos principais)
+## Como funciona o negócio (GTM embutido)
 
-```mermaid
-erDiagram
-  Profile ||--o{ ServiceOrder : "assignedMechanic"
-  Profile ||--o{ ServiceOrderLabor : mechanic
-  Profile ||--o{ ToolCheckout : checkedOutBy
-  Customer ||--o{ Vehicle : owns
-  Customer ||--o{ ServiceOrder : places
-  Vehicle ||--o{ ServiceOrder : subject
-  Vehicle }o--o| VehicleVariant : variant
-  VehicleVariant ||--o{ PartVehicleFitment : fitments
-  Part ||--o{ PartVehicleFitment : fitments
-  Part ||--o{ StockItem : stock
-  StockLocation ||--o{ StockItem : holds
-  Part ||--o{ InventoryMovement : movements
-  ServiceOrder ||--o{ ServiceOrderLine : lines
-  ServiceOrder ||--o{ ServiceOrderLabor : labor
-  ServiceOrder ||--o{ ServiceOrderStatusHistory : history
-  ServiceOrder ||--o{ InventoryMovement : movements
-  Tool ||--o{ ToolCheckout : checkouts
-  Tool ||--o{ ToolMaintenance : maintenances
+```text
+Signup → Trial 14 dias → Uso no workshop → Cobrança automática
+                ↓ inadimplência
+         Soft access 3 dias + e-mails de dunning
+                ↓
+         Bloqueio → /billing (checkout / portal)
 ```
 
-Resumo:
+- **Crons** (protegidos por `CRON_SECRET`): estoque baixo, trial acabando, dunning.
+- **Webhook Stripe**: sincroniza assinatura e status do plano.
+- **E-mails** (Resend, opcional): convite, fim de trial, falha de pagamento, estoque baixo.
+- **Métricas**: scorecard no admin + export CSV; histórico manual em `ops/metrics.csv`.
 
-- **`Profile`** — usuário do Auth; papel RBAC.
-- **`Customer`** → **`Vehicle`** (placa única; `vehicleModel`, `vehicleYear`, `reportedIssue`; `variant` opcional para catálogo/fitment).
-- **`Part`** + **`PartVehicleFitment`** + **`VehicleVariant`** — quais peças “servem” para qual variante.
-- **`StockItem`** — peça por local; **`InventoryMovement`** — auditoria e operações.
-- **`ServiceOrder`** — cliente, veículo, mecânico opcional, totais, status (`DRAFT` → … → `CANCELLED`).
-- **`ServiceOrderLine`** / **`ServiceOrderLabor`** — itens cobrados.
-- **`Tool`** / **`ToolCheckout`** / **`ToolMaintenance`** — controle de ferramentas.
-
-Enums importantes: `UserRole`, `ServiceOrderStatus`, `InventoryMovementType`, `ToolStatus`, etc. (ver `schema.prisma`).
+Documentação de go-to-market e operação: pasta [`ops/`](ops/).
 
 ---
 
-## Autenticação e autorização
+## Tecnologias
 
-| Camada | O que faz |
-|--------|-----------|
-| **Middleware** | Cookies de sessão; bloqueia anônimos; para rotas `/admin`, `/manager`, `/workshop`, exige `profiles.role` compatível com `ROUTE_ROLE_MAP` em `packages/auth/src/roles.ts`. |
-| **withAuth (API)** | Bearer token; perfil ativo; `roles` por endpoint. |
-| **Regras de negócio** | Ex.: `requireMechanicOwnsOrder` — mecânico só altera OS atribuída a ele (exceto admin/gerente). |
+| Camada | Escolha |
+|--------|---------|
+| Apps | **Next.js 15** (App Router), **React 19**, **Tailwind CSS 4**, GSAP |
+| Monorepo | **Turborepo** + **pnpm** (Node 20+) |
+| Banco | **PostgreSQL** (Supabase) + **Prisma** |
+| Auth | **Supabase Auth** (sessão cookie + Bearer na API) |
+| Cobrança | **Stripe** (Checkout, Portal, webhooks) |
+| E-mail | **Resend** (opcional) |
+| Deploy | **Vercel** (produto) e/ou **Docker Compose** (web + admin) |
+| Validação | **Zod** (`@oficina/shared`) |
+| API | Route Handlers REST em `/api/v1/*` + `withAuth` |
 
-Rotas públicas no middleware incluem `/login`, `GET /api/v1/health` e o cron de estoque (com segredo próprio).
+### Pacotes do monorepo
 
----
-
-## Áreas da interface (App Router)
-
-| Prefixo | Público alvo | Observação |
-|---------|----------------|------------|
-| `/admin/*` | ADMIN | Usuários / configurações administrativas. |
-| `/manager/*` | ADMIN, MANAGER, MECHANIC | Clientes, veículos, peças, estoque (conforme telas implementadas). |
-| `/workshop/*` | ADMIN, MANAGER, MECHANIC | OS, ferramentas, visão operacional. |
-| `/login` | todos | Entrada Supabase. |
-
-Fluxo **Novo cliente**: botão em `components/actions/add-customer-button.tsx` — salva cliente via `POST /api/v1/customers` e em seguida exibe o mesmo bloco de **veículo** usado em `vehicle-create-form-fields.tsx` (ou **Pular**).
-
----
-
-## API REST (v1)
-
-Autenticação: header **`Authorization: Bearer <access_token>`** (Supabase).
-
-| Módulo | Endpoints (principais) |
-|--------|-------------------------|
-| Sistema | `GET /api/v1/health` |
-| Sessão | `GET /api/v1/me` |
-| Usuários | `GET/PATCH /api/v1/users`, `GET/PATCH /api/v1/users/[id]` (ADMIN) |
-| Clientes | `GET/POST /api/v1/customers`, `GET/PATCH/DELETE /api/v1/customers/[id]` |
-| Veículos | `GET/POST /api/v1/vehicles` |
-| Variantes | `GET/POST /api/v1/vehicle-variants` |
-| Peças | `GET/POST /api/v1/parts`, `PATCH /api/v1/parts/[id]` |
-| Estoque | `GET /api/v1/inventory/locations`, `POST /api/v1/inventory/movements` |
-| Ferramentas | `GET/POST /api/v1/tools`, checkout, return, maintenance |
-| OS | `GET/POST /api/v1/service-orders`, `GET/PATCH /api/v1/service-orders/[id]`, `POST …/transition`, `…/lines`, `…/labor` |
-| Dashboard | `GET /api/v1/dashboard/stats` |
-| Cron | `GET/POST /api/v1/cron/low-stock` (protegido por `CRON_SECRET`) |
-
-Cada rota valida entrada com Zod em `@oficina/shared` e devolve JSON consistente com `api.ts`.
+| Pacote | Função |
+|--------|--------|
+| `apps/web` | Produto SaaS da oficina (UI + API) |
+| `apps/admin` | Console da plataforma |
+| `packages/database` | Schema Prisma, migrações, seed, client |
+| `packages/auth` | `withAuth`, RBAC de rotas, contexto de org |
+| `packages/shared` | Schemas Zod, helpers HTTP, política de acesso ao plano |
 
 ---
 
-## Pré-requisitos
+## Multi-tenant e segurança (diferenciais para venda B2B)
 
-- Node.js 20+
-- pnpm 9+
-- Projeto [Supabase](https://supabase.com) com Postgres (Auth habilitado)
+- Isolamento por **organização** (`organizationId` em todos os dados de negócio).
+- Membership por usuário (um e-mail pode, no modelo, pertencer a uma oficina com papel definido).
+- Gate de assinatura nas **páginas** e nas **APIs** (HTTP **402** se não houver acesso) — checkout/portal e `/me` liberados para regularizar.
+- Suspensão manual pelo console (corta acesso mesmo com plano).
+- Cortesia comercial sem quebrar o modelo de billing.
+- Impersonação auditada para suporte sem pedir senha do cliente.
+- Roles claros no tenant e no console da plataforma.
 
 ---
 
-## Configuração e comandos
+## Mapa rápido das áreas do produto
 
-1. Copie **`.env.example`** para **`.env`** na raiz (e alinhe `apps/web` se usar arquivo separado). **Nunca** commite chaves reais — o example usa só placeholders.
-2. Preencha `DATABASE_URL` e `DIRECT_URL` com as URLs do **pooler** no Supabase Dashboard. O host `db.<ref>.supabase.co:5432` costuma ser só IPv6 e falha em muitas redes Windows com *Can't reach database server*.
-3. Configure `NEXT_PUBLIC_SUPABASE_*`, `SUPABASE_SERVICE_ROLE_KEY` e `CRON_SECRET` (o Next carrega o `.env` da **raiz** do monorepo).
-4. (SaaS) Preencha as variáveis `STRIPE_*` e `NEXT_PUBLIC_APP_URL` conforme o `.env.example`. Checklist da fundação: [`ops/fase-0-acoes-manuais.md`](ops/fase-0-acoes-manuais.md).
+| Área | Quem usa | O que faz |
+|------|----------|-----------|
+| `/workshop` | Todos | Dashboard, OS, ferramentas |
+| `/manager` | Todos* | Clientes, peças / estoque |
+| `/admin` (tenant) | Admin da oficina | Usuários, go-live, growth (operador) |
+| `/billing` | Admin | Assinatura Stripe |
+| `/onboarding` | Novo tenant | Criar e configurar a oficina |
+| `admin` app | Equipe Oficina | Operar a plataforma |
+
+\* Com políticas de API por papel (mecânico com limites onde aplicável).
+
+---
+
+## API REST (para integrações e o próprio front)
+
+Autenticação: `Authorization: Bearer <access_token>` (Supabase).
+
+Principais módulos: `me`, `customers`, `vehicles`, `vehicle-variants`, `parts`, `inventory`, `tools`, `service-orders` (+ transition, lines, labor, quote), `users`, `invites`, `dashboard/stats`, `billing` (checkout, portal, webhook), `cron/*`, `health`.
+
+Validação Zod em toda entrada sensível; erros padronizados (`apiSuccess` / `apiError`).
+
+---
+
+## Pré-requisitos e subida local
+
+- Node.js **20+**
+- pnpm **9+**
+- Projeto [Supabase](https://supabase.com) (Postgres + Auth)
+- Conta [Stripe](https://stripe.com) (produção/teste)
+- (Opcional) [Resend](https://resend.com) para e-mails
 
 ```bash
+cp .env.example .env   # preencha Supabase, Stripe, CRON_SECRET, URLs
 pnpm install
 pnpm db:generate
-pnpm --filter @oficina/database db:migrate       # desenvolvimento (cria migrações interativas)
-pnpm --filter @oficina/database db:migrate:deploy  # CI/produção (aplica migrações existentes)
+pnpm --filter @oficina/database db:migrate:deploy
 pnpm db:seed
-pnpm dev
+pnpm dev               # web :3000 — ou pnpm dev:web / pnpm dev:admin
 ```
 
----
-
-## Deploy (Vercel)
-
-- **Root directory**: `apps/web`
-- **Install / Build**: definidos em [`apps/web/vercel.json`](apps/web/vercel.json) (`pnpm install` + `db:generate` + build do `@oficina/web` a partir da raiz do monorepo).
-- **Variáveis**: todas as do `.env.example` (Supabase, Prisma, `CRON_SECRET`, Stripe, `NEXT_PUBLIC_APP_URL`).
-- **Cron**: `0 8 * * *` → `/api/v1/cron/low-stock` (requer `CRON_SECRET`).
-- Páginas públicas legais: `/termos`, `/privacidade`.
-- Métricas manuais (MRR / trial): [`ops/metrics.csv`](ops/metrics.csv).
+Docker: ver [`ops/docker.md`](ops/docker.md) (`web` + `admin`).
 
 ---
 
-## Papéis (RBAC)
+## Deploy (visão de venda / operação)
 
-- **ADMIN** — usuários e acesso irrestrito às operações.
-- **MANAGER** — gestão completa operacional (cadastros, OS, estoque, ferramentas conforme política da API).
-- **MECHANIC** — operação em oficina; cadastros em `/manager/*`; restrições em OS (ex.: só a OS atribuída a ele onde aplicável).
+- **Produto (`apps/web`)**: Vercel com root directory `apps/web` — ver `apps/web/vercel.json` (build + crons).
+- **Console (`apps/admin`)**: deploy separado (Vercel com root `apps/admin` ou Docker na `:3001`).
+- Após os dois estarem no ar, cruzar `NEXT_PUBLIC_APP_URL` (e URLs do admin) para impersonação e links.
+- Variáveis: espelhar `.env.example` (nunca commitar segredos).
 
----
-
-## Seed
-
-Perfis de exemplo no seed (emails fictícios; vincule usuários reais no Supabase Auth se quiser logar):
-
-- `admin@oficina.local` (ADMIN)
-- `gerente@oficina.local` (MANAGER)
-- `mecanico@oficina.local` (MECHANIC)
+Checklists de fundação, billing e soft launch: [`ops/fase-0-acoes-manuais.md`](ops/fase-0-acoes-manuais.md) … [`ops/fase-6-autonomia.md`](ops/fase-6-autonomia.md).
 
 ---
 
-## Onde alterar o quê (referência rápida)
+## Papéis (resumo comercial)
 
-| Mudança | Onde olhar |
-|---------|------------|
-| Campos no banco / relações | `packages/database/prisma/schema.prisma` + migração |
-| Validação de API / tipos de formulário | `packages/shared/src/schemas/*` |
-| Nova rota HTTP | `apps/web/app/api/v1/.../route.ts` + repository |
-| Quem pode acessar a API | `withAuth(..., { roles })` na rota |
-| Quem acessa uma URL de página | `packages/auth/src/roles.ts` + `middleware.ts` |
-| Botões/modais de cadastro | `apps/web/components/actions/*` |
+**Na oficina**
+
+| Papel | Poder |
+|-------|--------|
+| Admin | Tudo: usuários, billing, operação |
+| Gerente | Operação completa (cadastros, OS, estoque, ferramentas) |
+| Mecânico | Operação no chão; restrições em OS onde fizer sentido |
+
+**Na plataforma**
+
+| Papel | Poder |
+|-------|--------|
+| Owner | Console completo + equipe |
+| Support | Oficinas, suporte, impersonação |
+| Finance | Pagamentos / cortesia |
+| Viewer | Somente leitura |
 
 ---
 
-Documentação inline adicional: comentários no `schema.prisma` e assinaturas nos repositórios sob `apps/web/server/modules/`.
+## Roadmap / fora do escopo atual (transparência que fecha venda séria)
+
+Hoje o produto **não** inclui (de propósito, nesta fase): NF-e, multi-filial, app mobile nativo nem white-label. Ideal para **soft launch** e primeiras oficinas pagantes; expansão natural depois de product-market fit.
+
+---
+
+## Documentação operacional
+
+| Doc | Conteúdo |
+|-----|----------|
+| [`ops/console-plataforma.md`](ops/console-plataforma.md) | Console admin |
+| [`ops/fase-2-billing.md`](ops/fase-2-billing.md) | Stripe, trial, gates |
+| [`ops/docker.md`](ops/docker.md) | Compose web + admin |
+| [`ops/support-templates.md`](ops/support-templates.md) | Templates de suporte |
+| [`ops/whatsapp-scripts.md`](ops/whatsapp-scripts.md) | Scripts de aquisição |
+
+---
+
+## Licença e contato
+
+Produto proprietário — **Oficina**. Para demonstração, parceria ou comercialização, use o fluxo de signup do app ou os canais documentados em `ops/`.
+
+> **Tagline para pitch:** *SaaS completo para oficinas mecânicas: OS, estoque, ferramentas e cobrança — com console para você operar a plataforma.*

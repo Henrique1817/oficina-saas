@@ -8,3 +8,4 @@ export * from "./schemas/user";
 export * from "./schemas/invite";
 export * from "./schemas/organization";
 export * from "./api";
+export * from "./access-policy";

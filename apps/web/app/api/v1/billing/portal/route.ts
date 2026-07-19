@@ -23,4 +23,4 @@ export const POST = withAuth(async (ctx) => {
     customerId: org.stripeCustomerId,
   });
   return apiSuccess({ url: session.url });
-}, { roles: ["ADMIN"] });
+}, { roles: ["ADMIN"], allowWithoutPlan: true });

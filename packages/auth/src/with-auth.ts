@@ -1,11 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
 import { prisma, type Profile, type UserRole } from "@oficina/database";
-import { apiError } from "@oficina/shared";
+import { apiError, organizationHasAccess } from "@oficina/shared";
 import type { AuthContext } from "./types";
 import { hasRole, orgSlugFromCookieHeader } from "./roles";
 
 export type WithAuthOptions = {
   roles?: UserRole[];
+  /**
+   * Permite a rota mesmo sem plano ativo (ex.: checkout / portal Stripe).
+   * Por padrão a API exige o mesmo gate das páginas.
+   */
+  allowWithoutPlan?: boolean;
 };
 
 function getSupabaseAdmin() {
@@ -116,6 +121,14 @@ export function withAuth(
 
       if (options?.roles && !hasRole(auth.role, options.roles)) {
         return apiError("Forbidden", 403, "FORBIDDEN");
+      }
+
+      if (!options?.allowWithoutPlan && !organizationHasAccess(auth.organization)) {
+        return apiError(
+          "Assinatura necessária ou acesso suspenso",
+          402,
+          "SUBSCRIPTION_REQUIRED",
+        );
       }
 
       return handler(auth, request);

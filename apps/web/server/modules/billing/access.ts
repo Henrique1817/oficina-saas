@@ -5,7 +5,7 @@ export {
   organizationHasAccess,
   pastDueGraceRemainingDays,
   PAST_DUE_GRACE_DAYS,
-} from "./access-policy";
+} from "@oficina/shared";
 
 export function mapStripeSubscriptionStatus(
   status: Stripe.Subscription.Status,

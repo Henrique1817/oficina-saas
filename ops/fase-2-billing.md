@@ -5,6 +5,7 @@
 2. Se Stripe configurado → Checkout (14 dias trial + cartão obrigatório)
 3. Webhook sincroniza `organizations.plan_status`
 4. Middleware bloqueia app se `PAST_DUE` / `CANCELED` / trial expirado → `/billing`
+5. `withAuth` aplica o mesmo gate nas APIs `/api/v1/*` → **402** `SUBSCRIPTION_REQUIRED` (exceto checkout/portal e `/me`)
 
 ## Env necessárias
 - `STRIPE_SECRET_KEY`

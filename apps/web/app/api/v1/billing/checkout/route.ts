@@ -51,4 +51,4 @@ export const POST = withAuth(async (ctx, request) => {
 
   if (!session.url) return apiError("Não foi possível criar o Checkout", 500);
   return apiSuccess({ url: session.url });
-}, { roles: ["ADMIN"] });
+}, { roles: ["ADMIN"], allowWithoutPlan: true });
