@@ -31,6 +31,7 @@ export const organizationRepository = {
     const slug = await uniqueOrgSlug(input.name);
     const trialEndsAt = new Date();
     trialEndsAt.setDate(trialEndsAt.getDate() + BILLING_TRIAL_DAYS);
+    const ownerEmail = input.ownerEmail.trim().toLowerCase();
 
     return prisma.$transaction(async (tx) => {
       const organization = await tx.organization.create({
@@ -62,7 +63,7 @@ export const organizationRepository = {
       // Espelha papel legado no profile do dono
       await tx.profile.update({
         where: { id: input.ownerUserId },
-        data: { role: "ADMIN", email: input.ownerEmail },
+        data: { role: "ADMIN", email: ownerEmail },
       });
 
       return organization;

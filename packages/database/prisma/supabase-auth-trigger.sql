@@ -1,5 +1,6 @@
 -- Run in Supabase SQL Editor after migrations.
 -- Creates Profile on new auth.users signup (default role MECHANIC).
+-- E-mail sempre em minúsculas para evitar duplicatas case-sensitive.
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger
@@ -11,11 +12,13 @@ BEGIN
   INSERT INTO public.profiles (id, email, full_name, role)
   VALUES (
     NEW.id,
-    NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(NEW.email, '@', 1)),
+    lower(trim(NEW.email)),
+    COALESCE(NEW.raw_user_meta_data->>'full_name', split_part(lower(trim(NEW.email)), '@', 1)),
     'MECHANIC'
   )
-  ON CONFLICT (id) DO NOTHING;
+  ON CONFLICT (id) DO UPDATE
+    SET email = EXCLUDED.email
+    WHERE public.profiles.email IS DISTINCT FROM EXCLUDED.email;
   RETURN NEW;
 END;
 $$;

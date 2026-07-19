@@ -15,6 +15,7 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:wipe": "tsx prisma/wipe-all.ts",
+    "db:ensure-admin": "tsx prisma/ensure-admin.ts",
     "db:bootstrap-owner": "tsx prisma/bootstrap-owner.ts",
     "db:studio": "prisma studio",
     "build": "prisma generate"

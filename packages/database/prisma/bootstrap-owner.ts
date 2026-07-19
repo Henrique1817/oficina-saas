@@ -12,8 +12,8 @@ const prisma = new PrismaClient();
 const email = (process.env.OWNER_EMAIL ?? "henrimi4710@gmail.com").trim().toLowerCase();
 const password = process.env.OWNER_PASSWORD;
 const fullName = process.env.OWNER_FULL_NAME ?? "Henrique Miguel";
-const orgName = process.env.OWNER_ORG_NAME ?? "Legacy";
-const orgSlug = (process.env.OWNER_ORG_SLUG ?? "legacy").toLowerCase();
+const orgName = process.env.OWNER_ORG_NAME ?? "Oficina Principal";
+const orgSlug = (process.env.OWNER_ORG_SLUG ?? "oficina-principal").toLowerCase();
 
 async function supabaseAdmin(
   path: string,

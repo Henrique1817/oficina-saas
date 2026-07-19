@@ -51,11 +51,12 @@ export const getProfileOrRedirect = cache(async (): Promise<Profile> => {
 
   let profile = await prisma.profile.findUnique({ where: { id: user.id } });
   if (!profile) {
+    const email = (user.email ?? "").trim().toLowerCase();
     profile = await prisma.profile.create({
       data: {
         id: user.id,
-        email: user.email!,
-        fullName: user.user_metadata?.full_name ?? user.email!.split("@")[0],
+        email,
+        fullName: user.user_metadata?.full_name ?? email.split("@")[0] ?? "Usuário",
         role: "MECHANIC",
       },
     });
