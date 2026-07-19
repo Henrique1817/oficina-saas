@@ -12,8 +12,8 @@ const prisma = new PrismaClient();
 const email = (process.env.OWNER_EMAIL ?? "henrimi4710@gmail.com").trim().toLowerCase();
 const password = process.env.OWNER_PASSWORD;
 const fullName = process.env.OWNER_FULL_NAME ?? "Henrique Miguel";
-const orgName = process.env.OWNER_ORG_NAME ?? "Oficina Principal";
-const orgSlug = (process.env.OWNER_ORG_SLUG ?? "oficina-principal").toLowerCase();
+const orgName = process.env.OWNER_ORG_NAME ?? "Legacy";
+const orgSlug = (process.env.OWNER_ORG_SLUG ?? "legacy").toLowerCase();
 
 async function supabaseAdmin(
   path: string,
@@ -141,8 +141,20 @@ async function main() {
     },
   });
 
-  console.log("Membership: ADMIN");
-  console.log(`Login: ${email} → /login (org ${orgSlug})`);
+  await prisma.platformUser.upsert({
+    where: { email },
+    update: { userId, role: "OWNER", active: true },
+    create: {
+      email,
+      userId,
+      role: "OWNER",
+      active: true,
+      invitedByEmail: "bootstrap-owner",
+    },
+  });
+
+  console.log("Membership: ADMIN · PlatformUser: OWNER");
+  console.log(`Login: ${email} → /login (org ${orgSlug}) · console admin OWNER`);
 }
 
 main()
