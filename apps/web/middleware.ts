@@ -24,8 +24,10 @@ const PUBLIC_PATHS = [
   "/api/v1/cron/low-stock",
   "/api/v1/cron/trial-ending",
   "/api/v1/cron/dunning",
+  "/api/v1/cron/pipeline-retention",
   "/api/v1/billing/webhook",
   "/api/v1/platform/impersonate",
+  "/api/v1/platform/pipeline",
 ];
 
 const AUTH_ONLY_PATHS = ["/onboarding", "/billing"];

@@ -75,6 +75,57 @@ export default async function OverviewPage() {
         · Autonomia: {h.autonomy.score}/{h.autonomy.total}
       </p>
 
+      <Card
+        className={
+          h.pipeline.lastFailedDeploy && h.pipeline.lastCd?.status !== "SUCCESS"
+            ? "space-y-2 border-danger/40"
+            : "space-y-2"
+        }
+      >
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-semibold">Pipeline / deploy</h2>
+          <Link href="/pipelines" className="text-xs text-primary hover:underline">
+            Ver logs →
+          </Link>
+        </div>
+        {h.pipeline.lastCd ? (
+          <p className="text-sm">
+            Último CD:{" "}
+            <Link
+              href={`/pipelines/${h.pipeline.lastCd.id}`}
+              className={
+                h.pipeline.lastCd.status === "SUCCESS"
+                  ? "font-medium text-success hover:underline"
+                  : h.pipeline.lastCd.status === "FAILURE"
+                    ? "font-medium text-danger hover:underline"
+                    : "font-medium hover:underline"
+              }
+            >
+              {h.pipeline.lastCd.status}
+            </Link>
+            {h.pipeline.lastCd.branch ? ` · ${h.pipeline.lastCd.branch}` : ""}
+            {h.pipeline.lastCd.finishedAt
+              ? ` · ${h.pipeline.lastCd.finishedAt.toLocaleString("pt-BR")}`
+              : ""}
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Nenhum CD reportado ainda. Configure secrets e rode o workflow.
+          </p>
+        )}
+        {h.pipeline.lastFailedDeploy && (
+          <p className="text-xs text-danger">
+            Última falha:{" "}
+            <Link
+              href={`/pipelines/${h.pipeline.lastFailedDeploy.id}`}
+              className="underline"
+            >
+              {h.pipeline.lastFailedDeploy.workflow}
+            </Link>
+          </p>
+        )}
+      </Card>
+
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="space-y-2">
           <h2 className="font-semibold">Autonomia (resumo)</h2>

@@ -19,29 +19,55 @@ export async function loadPlatformHealth() {
   const twoWeeksAgo = new Date(now - 14 * DAY_MS);
   const monthAgo = new Date(now - 30 * DAY_MS);
 
-  const [orgs, cronRuns, osThisWeek, osThisMonth, partsByOrg] = await Promise.all([
-    prisma.organization.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        _count: {
-          select: {
-            memberships: true,
-            customers: true,
-            serviceOrders: true,
-            parts: true,
+  const [orgs, cronRuns, osThisWeek, osThisMonth, partsByOrg, lastPipelineRuns] =
+    await Promise.all([
+      prisma.organization.findMany({
+        orderBy: { createdAt: "desc" },
+        include: {
+          _count: {
+            select: {
+              memberships: true,
+              customers: true,
+              serviceOrders: true,
+              parts: true,
+            },
           },
         },
-      },
-    }),
-    prisma.platformCronRun.findMany(),
-    prisma.serviceOrder.count({ where: { createdAt: { gte: weekAgo } } }),
-    prisma.serviceOrder.count({ where: { createdAt: { gte: monthAgo } } }),
-    prisma.part.groupBy({
-      by: ["organizationId"],
-      where: { active: true },
-      _count: { _all: true },
-    }),
-  ]);
+      }),
+      prisma.platformCronRun.findMany(),
+      prisma.serviceOrder.count({ where: { createdAt: { gte: weekAgo } } }),
+      prisma.serviceOrder.count({ where: { createdAt: { gte: monthAgo } } }),
+      prisma.part.groupBy({
+        by: ["organizationId"],
+        where: { active: true },
+        _count: { _all: true },
+      }),
+      prisma.platformPipelineRun.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 20,
+        select: {
+          id: true,
+          workflow: true,
+          status: true,
+          createdAt: true,
+          finishedAt: true,
+          deploymentUrl: true,
+          branch: true,
+        },
+      }),
+    ]);
+
+  const lastCd =
+    lastPipelineRuns.find(
+      (r) =>
+        r.workflow.toLowerCase().includes("cd") || Boolean(r.deploymentUrl),
+    ) ?? null;
+  const lastFailedDeploy =
+    lastPipelineRuns.find(
+      (r) =>
+        r.status === "FAILURE" &&
+        (r.workflow.toLowerCase().includes("cd") || Boolean(r.deploymentUrl)),
+    ) ?? null;
 
   const byStatus = (s: PlanStatus) => orgs.filter((o) => o.planStatus === s);
   const paid = byStatus("ACTIVE");
@@ -108,6 +134,11 @@ export async function loadPlatformHealth() {
     { job: "low-stock", label: "Estoque baixo", schedule: "08:00 UTC" },
     { job: "trial-ending", label: "Trial acabando", schedule: "09:00 UTC" },
     { job: "dunning", label: "Dunning PAST_DUE", schedule: "10:00 UTC" },
+    {
+      job: "pipeline-retention",
+      label: "Retenção pipelines (90d)",
+      schedule: "dom 05:00 UTC",
+    },
   ] as const;
 
   const cronStatus = cronJobs.map((j) => {
@@ -153,8 +184,10 @@ export async function loadPlatformHealth() {
     },
     {
       id: "cron-fresh",
-      label: "Crons rodaram nas últimas 48h",
-      ok: cronStatus.every((c) => c.fresh),
+      label: "Crons operacionais <48h (exceto retenção semanal)",
+      ok: cronStatus
+        .filter((c) => c.job !== "pipeline-retention")
+        .every((c) => c.fresh),
       detail: cronStatus
         .map((c) =>
           c.lastRunAt
@@ -162,6 +195,25 @@ export async function loadPlatformHealth() {
             : `${c.job}: nunca`,
         )
         .join(" · "),
+    },
+    {
+      id: "pipeline-ingest",
+      label: "PIPELINE_INGEST_SECRET configurado",
+      ok: Boolean(
+        (process.env.PIPELINE_INGEST_SECRET &&
+          process.env.PIPELINE_INGEST_SECRET.length > 8) ||
+          (process.env.CRON_SECRET && process.env.CRON_SECRET.length > 8),
+      ),
+    },
+    {
+      id: "last-cd-ok",
+      label: lastCd
+        ? `Último CD: ${lastCd.status}`
+        : "Ainda sem run de CD reportado",
+      ok: lastCd ? lastCd.status === "SUCCESS" : false,
+      detail: lastFailedDeploy
+        ? `Última falha: ${lastFailedDeploy.workflow} · ${lastFailedDeploy.createdAt.toLocaleString("pt-BR")}`
+        : lastCd?.finishedAt?.toLocaleString("pt-BR"),
     },
     {
       id: "paid-target",
@@ -231,6 +283,26 @@ export async function loadPlatformHealth() {
       targetProgress,
       targetMin: ACTIVE_TARGET_MIN,
       targetMax: ACTIVE_TARGET_MAX,
+    },
+    pipeline: {
+      lastCd: lastCd
+        ? {
+            id: lastCd.id,
+            workflow: lastCd.workflow,
+            status: lastCd.status,
+            createdAt: lastCd.createdAt,
+            finishedAt: lastCd.finishedAt,
+            deploymentUrl: lastCd.deploymentUrl,
+            branch: lastCd.branch,
+          }
+        : null,
+      lastFailedDeploy: lastFailedDeploy
+        ? {
+            id: lastFailedDeploy.id,
+            workflow: lastFailedDeploy.workflow,
+            createdAt: lastFailedDeploy.createdAt,
+          }
+        : null,
     },
     recentOrgs: orgs.slice(0, 12).map((o) => ({
       id: o.id,

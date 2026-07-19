@@ -184,6 +184,7 @@ Docker: ver [`ops/docker.md`](ops/docker.md) (`web` + `admin`).
 
 - **Produto (`apps/web`)**: Vercel com root directory `apps/web` — ver `apps/web/vercel.json` (build + crons).
 - **Console (`apps/admin`)**: deploy separado (Vercel com root `apps/admin` ou Docker na `:3001`).
+- **CI/CD**: GitHub Actions — [`.github/workflows/ci.yml`](.github/workflows/ci.yml) (PR) e [`cd-web.yml`](.github/workflows/cd-web.yml) (migrate + Vercel + smoke). Logs no admin → **Pipelines**. Guia: [`ops/pipeline-producao.md`](ops/pipeline-producao.md).
 - Após os dois estarem no ar, cruzar `NEXT_PUBLIC_APP_URL` (e URLs do admin) para impersonação e links.
 - Variáveis: espelhar `.env.example` (nunca commitar segredos).
 
@@ -222,6 +223,7 @@ Hoje o produto **não** inclui (de propósito, nesta fase): NF-e, multi-filial, 
 
 | Doc | Conteúdo |
 |-----|----------|
+| [`ops/pipeline-producao.md`](ops/pipeline-producao.md) | CI/CD, secrets, smoke, painel Pipelines |
 | [`ops/console-plataforma.md`](ops/console-plataforma.md) | Console admin |
 | [`ops/fase-2-billing.md`](ops/fase-2-billing.md) | Stripe, trial, gates |
 | [`ops/docker.md`](ops/docker.md) | Compose web + admin |

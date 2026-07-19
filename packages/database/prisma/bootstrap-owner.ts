@@ -141,8 +141,20 @@ async function main() {
     },
   });
 
-  console.log("Membership: ADMIN");
-  console.log(`Login: ${email} → /login (org ${orgSlug})`);
+  await prisma.platformUser.upsert({
+    where: { email },
+    update: { userId, role: "OWNER", active: true },
+    create: {
+      email,
+      userId,
+      role: "OWNER",
+      active: true,
+      invitedByEmail: "bootstrap-owner",
+    },
+  });
+
+  console.log("Membership: ADMIN · PlatformUser: OWNER");
+  console.log(`Login: ${email} → /login (org ${orgSlug}) · console admin OWNER`);
 }
 
 main()
