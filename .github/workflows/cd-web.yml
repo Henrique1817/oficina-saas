@@ -1,0 +1,149 @@
+name: CD · web
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: cd-web-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Migrate · Vercel · smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      PIPELINE_INGEST_URL: ${{ secrets.PIPELINE_INGEST_URL }}
+      PIPELINE_INGEST_SECRET: ${{ secrets.PIPELINE_INGEST_SECRET }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.DIRECT_URL }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Pipeline run (start)
+        continue-on-error: true
+        run: node scripts/pipeline-report.mjs run --status RUNNING
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
+
+      - name: Migrate production
+        id: migrate
+        run: pnpm --filter @oficina/database db:migrate:deploy
+        continue-on-error: true
+
+      - name: Report migrate
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ "${{ steps.migrate.outcome }}" = "success" ]; then
+            node scripts/pipeline-report.mjs step --name migrate --status SUCCESS --order 1
+          else
+            node scripts/pipeline-report.mjs step --name migrate --status FAILURE --order 1 --log "prisma migrate deploy falhou"
+            exit 1
+          fi
+
+      - name: Install Vercel CLI
+        if: steps.migrate.outcome == 'success'
+        run: npm i -g vercel@39
+
+      - name: Pull Vercel env
+        id: vercel_pull
+        if: steps.migrate.outcome == 'success'
+        working-directory: apps/web
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        continue-on-error: true
+
+      - name: Build project artifacts
+        id: vercel_build
+        if: steps.vercel_pull.outcome == 'success'
+        working-directory: apps/web
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        continue-on-error: true
+
+      - name: Deploy prebuilt
+        id: vercel_deploy
+        if: steps.vercel_build.outcome == 'success'
+        working-directory: apps/web
+        run: |
+          url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Deployed: $url"
+        continue-on-error: true
+
+      - name: Report deploy
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ "${{ steps.vercel_deploy.outcome }}" = "success" ]; then
+            node scripts/pipeline-report.mjs step --name vercel-deploy --status SUCCESS --order 2 --log "${{ steps.vercel_deploy.outputs.url }}"
+          else
+            node scripts/pipeline-report.mjs step --name vercel-deploy --status FAILURE --order 2 --log "deploy Vercel falhou"
+            exit 1
+          fi
+
+      - name: Smoke API
+        id: smoke
+        if: steps.vercel_deploy.outcome == 'success'
+        env:
+          SMOKE_URL: ${{ steps.vercel_deploy.outputs.url }}
+        run: |
+          base="${SMOKE_URL:-${{ secrets.PIPELINE_INGEST_URL }}}"
+          node scripts/api-smoke.mjs "$base"
+        continue-on-error: true
+
+      - name: Report smoke
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ "${{ steps.smoke.outcome }}" = "success" ]; then
+            node scripts/pipeline-report.mjs step --name smoke --status SUCCESS --order 3
+          elif [ "${{ steps.vercel_deploy.outcome }}" != "success" ]; then
+            node scripts/pipeline-report.mjs step --name smoke --status SKIPPED --order 3 --log "deploy não concluiu"
+          else
+            node scripts/pipeline-report.mjs step --name smoke --status FAILURE --order 3 --log "api-smoke falhou"
+            exit 1
+          fi
+
+      - name: Pipeline run (finish)
+        if: always()
+        continue-on-error: true
+        run: |
+          url="${{ steps.vercel_deploy.outputs.url }}"
+          if [ "${{ steps.migrate.outcome }}" = "success" ] && [ "${{ steps.vercel_deploy.outcome }}" = "success" ] && [ "${{ steps.smoke.outcome }}" = "success" ]; then
+            if [ -n "$url" ]; then
+              node scripts/pipeline-report.mjs run --status SUCCESS --finished --deploymentUrl "$url"
+            else
+              node scripts/pipeline-report.mjs run --status SUCCESS --finished
+            fi
+          else
+            node scripts/pipeline-report.mjs run --status FAILURE --finished
+          fi
+
+      - name: Gate
+        if: always()
+        run: |
+          if [ "${{ steps.migrate.outcome }}" != "success" ] || [ "${{ steps.vercel_deploy.outcome }}" != "success" ] || [ "${{ steps.smoke.outcome }}" != "success" ]; then
+            echo "CD falhou"
+            exit 1
+          fi

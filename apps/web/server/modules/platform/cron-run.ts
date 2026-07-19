@@ -1,8 +1,14 @@
 import { prisma, type Prisma } from "@oficina/database";
 
+export type CronJobName =
+  | "low-stock"
+  | "trial-ending"
+  | "dunning"
+  | "pipeline-retention";
+
 /** Registra última execução de cron (visível no console `/saude`). */
 export async function recordCronRun(
-  job: "low-stock" | "trial-ending" | "dunning",
+  job: CronJobName,
   meta?: Prisma.InputJsonValue,
   lastOk = true,
 ) {

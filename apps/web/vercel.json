@@ -15,6 +15,10 @@
     {
       "path": "/api/v1/cron/dunning",
       "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/v1/cron/pipeline-retention",
+      "schedule": "0 5 * * 0"
     }
   ]
 }
