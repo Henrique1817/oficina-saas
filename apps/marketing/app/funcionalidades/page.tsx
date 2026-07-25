@@ -8,33 +8,45 @@ import { TrialCta } from "@/components/ui/cta";
 export const metadata: Metadata = {
   title: "Funcionalidades",
   description:
-    "Dashboard, OS, orçamento no WhatsApp, estoque, ferramentas e equipe — o ciclo fechado da oficina.",
+    "Agenda do dia, OS, orçamento WhatsApp, autorização, estoque rápido, histórico do cliente e ferramentas na OS.",
 };
 
 const highlights = [
   {
-    title: "Dashboard operacional",
-    body: "OS abertas, estoque baixo, ferramentas em uso — atalhos pro dia.",
+    title: "Agenda do dia",
+    body: "Prazos de hoje, OS atrasadas e quadro por mecânico — a operação do dia numa tela.",
   },
   {
-    title: "Clientes e veículos",
-    body: "Placa, modelo, ano, problema relatado. Fitment no modelo de dados.",
+    title: "Clientes e histórico",
+    body: "Ficha com veículos, OS anteriores, peças usadas e atalho para nova ordem.",
   },
   {
     title: "Ordens de serviço",
-    body: "Rascunho → aprovada → em execução → concluída → faturada / cancelada.",
+    body: "Rascunho → aprovada → em execução → concluída → faturada. Mão de obra, peças e prazo.",
   },
   {
     title: "Orçamento + WhatsApp",
-    body: "Envio, aprovação, PDF/impressão e atalho pro canal que já fecha serviço.",
+    body: "Templates da oficina, validade, PDF/impressão e envio no canal que já fecha serviço.",
   },
   {
-    title: "Estoque de peças",
-    body: "Catálogo, locais, movimentos e alerta de estoque baixo.",
+    title: "Autorização de serviço",
+    body: "Aceite digital ou termo impresso — autorização clara de peças e serviço (não é NF-e).",
   },
   {
-    title: "Ferramentas e equipe",
-    body: "Retirada/devolução. Papéis Admin, Gerente e Mecânico com convites.",
+    title: "Estoque no ritmo do chão",
+    body: "Busca por SKU/nome, entrada/saída rápida, reserva/consumo na OS e alerta de mínimo.",
+  },
+  {
+    title: "Ferramentas na OS",
+    body: "Checkout e devolução vinculados à ordem aprovada ou em execução.",
+  },
+  {
+    title: "Equipe e papéis",
+    body: "Admin, Gerente e Mecânico. Convites por link (e-mail ou WhatsApp).",
+  },
+  {
+    title: "Assinatura Stripe",
+    body: "14 dias grátis, cobrança automática depois. Portal para cancelar ou trocar plano.",
   },
 ];
 
@@ -48,8 +60,8 @@ export default function FuncionalidadesPage() {
             O ciclo da oficina, fechado de ponta a ponta.
           </h1>
           <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-dim">
-            Não é só CRM. Cadastro → orçamento → OS → estoque → ferramenta — com
-            billing Stripe e trial de 14 dias.
+            Agenda, cadastro, orçamento, autorização, OS, estoque e ferramenta —
+            com trial de 14 dias e cobrança Stripe.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <TrialCta />

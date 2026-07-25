@@ -1,8 +1,8 @@
 export const siteConfig = {
   name: "Oficina",
-  tagline: "A oficina no controle — OS, estoque e orçamento sem planilha.",
+  tagline: "A oficina no controle — agenda, OS, estoque e orçamento sem planilha.",
   description:
-    "SaaS multi-tenant para oficinas mecânicas brasileiras. Ciclo fechado: clientes, orçamento, OS, estoque e ferramentas — com trial de 14 dias.",
+    "SaaS multi-tenant para oficinas mecânicas brasileiras. Agenda do dia, histórico do cliente, orçamento WhatsApp, autorização, estoque rápido e ferramentas na OS — trial de 14 dias.",
   pitch:
     "Para oficinas pequenas e médias que ainda vivem de planilha, WhatsApp e caderno.",
   priceMonthly: 97,

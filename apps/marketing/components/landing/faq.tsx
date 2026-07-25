@@ -10,11 +10,19 @@ const faqs = [
   },
   {
     q: "Como cancelo?",
-    a: "Pelo Customer Portal do Stripe, dentro do app (billing). Sem ligação, sem “fale com o gerente”.",
+    a: "Pelo Customer Portal do Stripe, dentro do app (Assinatura). Sem ligação, sem “fale com o gerente”.",
+  },
+  {
+    q: "O que a oficina ganha no dia a dia?",
+    a: "Agenda com prazos e atrasos, ficha do cliente com histórico, orçamento no WhatsApp, autorização de serviço, estoque com movimento rápido e ferramentas ligadas à OS.",
+  },
+  {
+    q: "Como funciona a autorização de serviço?",
+    a: "Na OS você registra aceite digital ou imprime o termo para o cliente assinar. Deixa claro o que foi autorizado — não substitui nota fiscal.",
   },
   {
     q: "Qual a diferença entre Admin, Gerente e Mecânico?",
-    a: "Admin cuida de tudo (usuários e billing). Gerente opera cadastros, OS, estoque e ferramentas. Mecânico atua no chão, com restrições sensatas — por exemplo, OS atribuída.",
+    a: "Admin cuida de tudo (usuários e billing). Gerente opera cadastros, OS, estoque e ferramentas. Mecânico atua no chão — inclusive entrada/saída de estoque e ferramentas na OS.",
   },
   {
     q: "Meus dados ficam misturados com outras oficinas?",
@@ -22,7 +30,7 @@ const faqs = [
   },
   {
     q: "Tem emissão de NF-e?",
-    a: `Ainda não. Nesta fase também não há ${siteConfig.excludedScope.filter((x) => x !== "NF-e").join(", ").toLowerCase()}. É transparência de escopo — soft launch focado no ciclo OS → estoque.`,
+    a: `Ainda não. Nesta fase também não há ${siteConfig.excludedScope.filter((x) => x !== "NF-e").join(", ").toLowerCase()}. Soft launch focado no ciclo operacional da oficina.`,
   },
   {
     q: "Quanto custa depois do trial?",

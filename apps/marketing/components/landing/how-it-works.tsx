@@ -20,8 +20,8 @@ const steps = [
   },
   {
     n: "03",
-    title: "OS, estoque, orçamento",
-    body: "Fecha o serviço no sistema: orçamento no WhatsApp, peças na OS.",
+    title: "Use no dia a dia",
+    body: "Agenda, orçamento no WhatsApp, autorização, estoque rápido e OS real — checklist de go-live incluso.",
   },
   {
     n: "04",
