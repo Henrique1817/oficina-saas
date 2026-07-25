@@ -1,0 +1,246 @@
+name: CD · production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: cd-production
+  cancel-in-progress: false
+
+env:
+  PIPELINE_INGEST_URL: ${{ secrets.PIPELINE_INGEST_URL }}
+  PIPELINE_INGEST_SECRET: ${{ secrets.PIPELINE_INGEST_SECRET }}
+
+jobs:
+  migrate:
+    name: Prisma migrate (prod)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.DIRECT_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Require DB secrets
+        run: |
+          if [ -z "$DATABASE_URL" ] || [ -z "$DIRECT_URL" ]; then
+            echo "Defina secrets DATABASE_URL e DIRECT_URL"
+            exit 1
+          fi
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate
+      - run: pnpm --filter @oficina/database db:migrate:deploy
+
+  deploy-web:
+    name: Deploy web
+    needs: migrate
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Resolve project id
+        id: project
+        env:
+          WEB_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
+          LEGACY_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          id="${WEB_ID:-$LEGACY_ID}"
+          if [ -z "${{ secrets.VERCEL_TOKEN }}" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$id" ]; then
+            echo "Defina VERCEL_TOKEN, VERCEL_ORG_ID e VERCEL_PROJECT_ID_WEB (ou VERCEL_PROJECT_ID)"
+            exit 1
+          fi
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+
+      - run: pnpm install --frozen-lockfile
+      - run: npm i -g vercel@39
+
+      - name: Pull · build · deploy
+        id: deploy
+        working-directory: apps/web
+        env:
+          VERCEL_PROJECT_ID: ${{ steps.project.outputs.id }}
+        run: |
+          vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+          vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+          url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Deployed web: $url"
+
+      - name: Smoke
+        env:
+          SMOKE_URL: ${{ steps.deploy.outputs.url }}
+        run: node scripts/api-smoke.mjs "${SMOKE_URL}"
+
+  deploy-admin:
+    name: Deploy admin
+    needs: migrate
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
+      skipped: ${{ steps.gate.outputs.skip }}
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Skip if no project secret
+        id: gate
+        run: |
+          if [ -z "$VERCEL_PROJECT_ID" ] || [ -z "${{ secrets.VERCEL_TOKEN }}" ] || [ -z "$VERCEL_ORG_ID" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "VERCEL_PROJECT_ID_ADMIN ausente — skip deploy admin"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: pnpm/action-setup@v4
+        if: steps.gate.outputs.skip != 'true'
+        with:
+          version: 9.15.4
+
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.skip != 'true'
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - if: steps.gate.outputs.skip != 'true'
+        run: pnpm install --frozen-lockfile
+
+      - if: steps.gate.outputs.skip != 'true'
+        run: npm i -g vercel@39
+
+      - name: Pull · build · deploy
+        id: deploy
+        if: steps.gate.outputs.skip != 'true'
+        working-directory: apps/admin
+        run: |
+          vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+          vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+          url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Deployed admin: $url"
+
+      - name: Smoke
+        if: steps.gate.outputs.skip != 'true'
+        env:
+          SMOKE_URL: ${{ steps.deploy.outputs.url }}
+        run: node scripts/site-smoke.mjs "${SMOKE_URL}" /login /
+
+  deploy-marketing:
+    name: Deploy marketing
+    needs: migrate
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
+      skipped: ${{ steps.gate.outputs.skip }}
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_MARKETING }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Skip if no project secret
+        id: gate
+        run: |
+          if [ -z "$VERCEL_PROJECT_ID" ] || [ -z "${{ secrets.VERCEL_TOKEN }}" ] || [ -z "$VERCEL_ORG_ID" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "VERCEL_PROJECT_ID_MARKETING ausente — skip deploy marketing"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: pnpm/action-setup@v4
+        if: steps.gate.outputs.skip != 'true'
+        with:
+          version: 9.15.4
+
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.skip != 'true'
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - if: steps.gate.outputs.skip != 'true'
+        run: pnpm install --frozen-lockfile
+
+      - if: steps.gate.outputs.skip != 'true'
+        run: npm i -g vercel@39
+
+      - name: Pull · build · deploy
+        id: deploy
+        if: steps.gate.outputs.skip != 'true'
+        working-directory: apps/marketing
+        run: |
+          vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+          vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+          url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Deployed marketing: $url"
+
+      - name: Smoke
+        if: steps.gate.outputs.skip != 'true'
+        env:
+          SMOKE_URL: ${{ steps.deploy.outputs.url }}
+        run: node scripts/site-smoke.mjs "${SMOKE_URL}" / /contato /precos
+
+  finish:
+    name: Gate CD
+    needs: [migrate, deploy-web, deploy-admin, deploy-marketing]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require migrate + web
+        run: |
+          mig="${{ needs.migrate.result }}"
+          web="${{ needs.deploy-web.result }}"
+          admin="${{ needs.deploy-admin.result }}"
+          mkt="${{ needs.deploy-marketing.result }}"
+          echo "migrate=$mig web=$web admin=$admin marketing=$mkt"
+          if [ "$mig" != "success" ] || [ "$web" != "success" ]; then
+            node scripts/pipeline-report.mjs run --status FAILURE --finished || true
+            exit 1
+          fi
+          if [ "$admin" != "success" ] || [ "$mkt" != "success" ]; then
+            node scripts/pipeline-report.mjs run --status FAILURE --finished || true
+            exit 1
+          fi
+          url="${{ needs.deploy-web.outputs.url }}"
+          if [ -n "$url" ]; then
+            node scripts/pipeline-report.mjs run --status SUCCESS --finished --deploymentUrl "$url" || true
+          else
+            node scripts/pipeline-report.mjs run --status SUCCESS --finished || true
+          fi
+          echo "CD OK"

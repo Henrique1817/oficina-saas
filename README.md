@@ -182,6 +182,7 @@ Docker: ver [`ops/docker.md`](ops/docker.md) (`web` + `admin`).
 
 ## Deploy (visão de venda / operação)
 
+- **CI/CD**: [`ops/cicd.md`](ops/cicd.md) — GitHub Actions (lint · typecheck · tests · build · migrate · Vercel · smoke).
 - **Produto (`apps/web`)**: Vercel com root directory `apps/web` — ver `apps/web/vercel.json` (build + crons).
 - **Variáveis Vercel**: checklist em [`ops/vercel-env.md`](ops/vercel-env.md) (Supabase, Prisma, Stripe, crons).
 - **Console (`apps/admin`)**: deploy separado (Vercel com root `apps/admin` ou Docker na `:3001`).
