@@ -12,6 +12,9 @@
     "lint": {
       "dependsOn": ["^db:generate"]
     },
+    "test": {
+      "dependsOn": ["^db:generate"]
+    },
     "db:generate": {
       "cache": false,
       "outputs": ["node_modules/.prisma/**", "generated/**"]
