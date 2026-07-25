@@ -556,3 +556,29 @@ model ServiceOrderStatusHistory {
   @@index([serviceOrderId, createdAt])
   @@map("service_order_status_history")
 }
+
+// ─── Marketing / aquisição (plataforma) ─────────────────────────────────────
+
+enum ContactLeadStatus {
+  NEW
+  CONTACTED
+  ARCHIVED
+}
+
+/// Leads do formulário /contato do site marketing → Supabase (Postgres)
+model ContactLead {
+  id        String            @id @default(cuid())
+  name      String
+  email     String
+  workshop  String
+  message   String            @db.Text
+  source    String            @default("marketing")
+  status    ContactLeadStatus @default(NEW)
+  createdAt DateTime          @default(now()) @map("created_at")
+  updatedAt DateTime          @updatedAt @map("updated_at")
+
+  @@index([createdAt])
+  @@index([email])
+  @@index([status])
+  @@map("contact_leads")
+}

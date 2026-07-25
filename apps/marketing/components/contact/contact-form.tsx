@@ -49,7 +49,19 @@ export function ContactForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(parsed.data),
       });
-      const data = (await res.json()) as { ok?: boolean; message?: string };
+
+      let data: { ok?: boolean; message?: string } = {};
+      try {
+        data = (await res.json()) as { ok?: boolean; message?: string };
+      } catch {
+        setStatus("error");
+        setServerMessage(
+          res.ok
+            ? "Resposta inválida do servidor."
+            : "Servidor indisponível. Confira o deploy do marketing e as variáveis do banco.",
+        );
+        return;
+      }
 
       if (!res.ok) {
         setStatus("error");
