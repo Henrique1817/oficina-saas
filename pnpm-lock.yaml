@@ -84,6 +84,9 @@ importers:
       '@gsap/react':
         specifier: ^2.1.2
         version: 2.1.2(gsap@3.15.0)(react@19.2.6)
+      '@oficina/database':
+        specifier: workspace:^
+        version: link:../../packages/database
       gsap:
         specifier: ^3.15.0
         version: 3.15.0

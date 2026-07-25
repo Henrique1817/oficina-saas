@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@oficina/database";
 import { contactSchema } from "@/lib/contact-schema";
+
+export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -24,18 +27,35 @@ export async function POST(request: Request) {
     );
   }
 
-  // Soft launch: valida e registra no server log.
-  // Integre Resend/CRM aqui quando o canal de vendas estiver pronto.
-  console.info("[marketing/contact]", {
-    at: new Date().toISOString(),
-    name: parsed.data.name,
-    email: parsed.data.email,
-    workshop: parsed.data.workshop,
-    messageLength: parsed.data.message.length,
-  });
+  const { name, email, workshop, message } = parsed.data;
 
-  return NextResponse.json({
-    ok: true,
-    message: "Recebemos sua mensagem. Em breve retornamos pelo e-mail informado.",
-  });
+  try {
+    const lead = await prisma.contactLead.create({
+      data: {
+        name,
+        email,
+        workshop,
+        message,
+        source: "marketing",
+      },
+      select: { id: true },
+    });
+
+    return NextResponse.json({
+      ok: true,
+      id: lead.id,
+      message:
+        "Recebemos sua mensagem. Em breve retornamos pelo e-mail informado.",
+    });
+  } catch (err) {
+    console.error("[marketing/contact] persist failed", err);
+    return NextResponse.json(
+      {
+        ok: false,
+        message:
+          "Não foi possível registrar sua mensagem agora. Tente de novo em instantes.",
+      },
+      { status: 503 },
+    );
+  }
 }
