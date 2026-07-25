@@ -25,8 +25,9 @@ export function PainSolution() {
           <Reveal>
             <p className="mono-label text-ok">Com o Oficina</p>
             <p className="mt-4 text-lg leading-relaxed text-ink-dim">
-              Ciclo fechado: cliente e veículo → orçamento → OS → estoque →
-              ferramenta. Um ambiente por oficina. Equipe com papéis claros.
+              Ciclo fechado: agenda do dia → cliente e veículo → orçamento e
+              autorização → OS → estoque → ferramenta. Um ambiente por oficina.
+              Equipe com papéis claros.
             </p>
           </Reveal>
         </div>

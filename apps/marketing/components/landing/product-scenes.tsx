@@ -9,27 +9,27 @@ gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 const scenes = [
   {
-    label: "01 · Dashboard",
-    title: "O dia da oficina numa tela",
-    body: "OS abertas, estoque baixo, ferramentas em uso e atalhos pro que importa agora.",
+    label: "01 · Agenda do dia",
+    title: "Prazos, atrasos e quem está com cada OS",
+    body: "Dashboard operacional: o que vence hoje, o que atrasou e o quadro por mecânico — abre a oficina pelo sistema, não pelo caderno.",
     accent: "signal" as const,
   },
   {
     label: "02 · OS + orçamento",
-    title: "Orçamento que vende no WhatsApp",
-    body: "Linhas de peça e serviço, status da OS e atalho pro WhatsApp — do rascunho ao faturado.",
+    title: "Orçamento no WhatsApp e autorização do serviço",
+    body: "Peças, mão de obra e desconto. Envia PDF/WhatsApp, registra aceite digital ou imprime o termo — do rascunho ao faturado.",
     accent: "ok" as const,
   },
   {
-    label: "03 · Estoque",
-    title: "Peça na OS, estoque atualizado",
-    body: "Catálogo, locais, movimentos e alerta de estoque baixo. Menos “achismo” na bancada.",
+    label: "03 · Estoque no chão",
+    title: "Busca rápida, alerta de mínimo, consumo na OS",
+    body: "SKU ou nome, entrada/saída em segundos. Reserva e baixa na ordem. Banner quando bater o estoque baixo.",
     accent: "signal" as const,
   },
   {
-    label: "04 · Ferramentas + equipe",
-    title: "Patrimônio e papéis claros",
-    body: "Retirada e devolução de ferramentas. Admin, Gerente e Mecânico — cada um no seu escopo.",
+    label: "04 · Cliente + ferramentas",
+    title: "Histórico do cliente e ferramenta na OS",
+    body: "Ficha com veículos, OS anteriores e peças usadas. Ferramentas vinculadas à OS aprovada — menos “sumiu na bancada”.",
     accent: "ok" as const,
   },
 ];
@@ -133,30 +133,30 @@ function SceneVisual({
         <div className="w-full max-w-sm space-y-3 font-[family-name:var(--font-mono)] text-[0.65rem] text-ink-mute">
           {index === 0 && (
             <>
-              <Row label="OS abertas" value="12" hot />
-              <Row label="Estoque baixo" value="3" />
-              <Row label="Ferramentas fora" value="7" />
+              <Row label="Prazo hoje" value="5" hot />
+              <Row label="Atrasadas" value="2" hot />
+              <Row label="Quadro · João" value="3 OS" />
             </>
           )}
           {index === 1 && (
             <>
               <Row label="OS-1842" value="Em execução" hot />
-              <Row label="Orçamento" value="Enviado · WhatsApp" />
-              <Row label="Mão de obra" value="R$ 280" />
+              <Row label="Orçamento" value="WhatsApp · PDF" />
+              <Row label="Autorização" value="Aceite digital" />
             </>
           )}
           {index === 2 && (
             <>
-              <Row label="Filtro óleo" value="4 un · abaixo" hot />
-              <Row label="Pastilha dianteira" value="18 un" />
-              <Row label="Movimento" value="Consumo na OS" />
+              <Row label="Busca" value="FIL-001 · pastilha" />
+              <Row label="Filtro óleo" value="4 un · baixo" hot />
+              <Row label="Movimento" value="Entrada · 12 un" />
             </>
           )}
           {index === 3 && (
             <>
-              <Row label="Torquímetro #03" value="Com João" hot />
-              <Row label="Papel" value="Mecânico" />
-              <Row label="Convite" value="Pendente" />
+              <Row label="Cliente Silva" value="8 OS · R$ 12k" />
+              <Row label="Torquímetro #03" value="Na OS-1842" hot />
+              <Row label="Equipe" value="Admin · Mecânico" />
             </>
           )}
         </div>

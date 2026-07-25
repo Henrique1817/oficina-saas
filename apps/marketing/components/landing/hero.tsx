@@ -75,8 +75,8 @@ export function Hero() {
           data-hero="support"
           className="mt-5 max-w-md text-base leading-relaxed text-ink-dim md:text-lg"
         >
-          OS, estoque e orçamento no WhatsApp — sem planilha. Trial de 14 dias;
-          cobrança só depois.
+          Agenda do dia, OS, orçamento no WhatsApp, estoque e autorização —
+          sem planilha. Trial de 14 dias; cobrança só depois.
         </p>
 
         <div
