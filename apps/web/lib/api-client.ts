@@ -1,7 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { ORG_COOKIE } from "@oficina/auth";
+import { ORG_COOKIE } from "@oficina/auth/roles";
 
 function readOrgSlugFromDocument(): string | null {
   if (typeof document === "undefined") return null;
