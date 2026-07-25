@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import path from "path";
 import { fileURLToPath } from "url";
 import { createRequire } from "module";
+import { PrismaPlugin } from "@prisma/nextjs-monorepo-workaround-plugin";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const monorepoRoot = path.resolve(__dirname, "../..");
@@ -18,6 +19,13 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: monorepoRoot,
   transpilePackages: ["@oficina/database", "@oficina/shared", "@oficina/auth"],
   serverExternalPackages: ["@prisma/client", "prisma"],
+  // Garante que o query engine do Prisma entre no bundle serverless (pnpm monorepo → Vercel)
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.plugins = [...(config.plugins ?? []), new PrismaPlugin()];
+    }
+    return config;
+  },
 };
 
 export default nextConfig;
