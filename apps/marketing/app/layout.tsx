@@ -32,8 +32,10 @@ export const metadata: Metadata = {
   keywords: [
     "oficina mecânica",
     "ordem de serviço",
+    "agenda oficina",
     "estoque oficina",
     "orçamento WhatsApp",
+    "autorização serviço",
     "SaaS oficina",
     "gestão oficina",
   ],
