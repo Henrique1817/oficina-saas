@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { ORG_COOKIE, rolesForPath } from "@oficina/auth";
+/** Subpath sem Prisma — barrel `@oficina/auth` puxa with-auth e estoura o limite Edge (1 MB). */
+import { ORG_COOKIE, rolesForPath } from "@oficina/auth/roles";
 import { updateSession } from "@/lib/supabase/middleware";
 import { createClient } from "@supabase/supabase-js";
 import {

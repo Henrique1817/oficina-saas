@@ -1,4 +1,5 @@
-import type { UserRole } from "@oficina/database";
+/** Local union — evita puxar `@oficina/database` / Prisma no Edge (middleware). */
+export type UserRole = "ADMIN" | "MANAGER" | "MECHANIC";
 
 const ROLE_HIERARCHY: Record<UserRole, number> = {
   ADMIN: 3,
