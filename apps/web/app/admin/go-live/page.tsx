@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { getSessionOrRedirect } from "@/lib/session";
 import { prisma } from "@oficina/database";
-import { organizationHasAccess, isStripeConfigured } from "@/server/modules/billing";
+import {
+  organizationHasAccess,
+  isMercadoPagoConfigured,
+} from "@/server/modules/billing";
 import { Card } from "@/components/ui/card";
 
 type Check = { id: string; label: string; ok: boolean; optional?: boolean; href?: string };
@@ -40,18 +43,18 @@ export default async function GoLivePage() {
       href: "/billing",
     },
     {
-      id: "stripe-env",
-      label: "Stripe configurado no ambiente",
-      ok: isStripeConfigured() || courtesy,
+      id: "mp-env",
+      label: "Mercado Pago configurado no ambiente",
+      ok: isMercadoPagoConfigured() || courtesy,
       optional: courtesy,
       href: "/billing",
     },
     {
-      id: "stripe-customer",
+      id: "mp-preapproval",
       label: courtesy
-        ? "Customer Stripe (opcional em cortesia/piloto)"
-        : "Customer Stripe vinculado à oficina",
-      ok: Boolean(org.stripeCustomerId) || courtesy,
+        ? "Assinatura MP (opcional em cortesia/piloto)"
+        : "Assinatura Mercado Pago vinculada à oficina",
+      ok: Boolean(org.mpPreapprovalId) || courtesy,
       optional: courtesy,
       href: "/billing",
     },

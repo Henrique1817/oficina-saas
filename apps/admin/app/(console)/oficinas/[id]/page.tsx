@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@oficina/database";
 import { Card } from "@/components/ui/card";
 import { OrgActions } from "../org-actions";
-import { STATUS_LABEL, stripeDashboardUrl } from "@/lib/billing-metrics";
+import { STATUS_LABEL, mpPreapprovalUrl } from "@/lib/billing-metrics";
 import { requirePlatformSession } from "@/lib/session";
 import { hasCapability, PlatformCapability } from "@/lib/roles";
 import { ACTION_LABEL, buildOrgTimeline } from "@/lib/support";
@@ -81,37 +81,30 @@ export default async function OficinaDetailPage({
         </Card>
 
         <Card className="space-y-2">
-          <h2 className="font-semibold">Stripe</h2>
+          <h2 className="font-semibold">Mercado Pago</h2>
           <dl className="space-y-2 text-sm">
             <div>
-              <p className="text-xs text-muted-foreground">Customer</p>
-              {org.stripeCustomerId ? (
+              <p className="text-xs text-muted-foreground">Payer</p>
+              <p className="font-mono text-xs">{org.mpPayerId ?? "—"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Preapproval</p>
+              {org.mpPreapprovalId ? (
                 <a
-                  href={stripeDashboardUrl("customers", org.stripeCustomerId)}
+                  href={mpPreapprovalUrl(org.mpPreapprovalId)}
                   target="_blank"
                   rel="noreferrer"
                   className="font-mono text-xs text-primary hover:underline"
                 >
-                  {org.stripeCustomerId}
+                  {org.mpPreapprovalId}
                 </a>
               ) : (
                 <p className="text-muted-foreground">—</p>
               )}
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Subscription</p>
-              {org.stripeSubscriptionId ? (
-                <a
-                  href={stripeDashboardUrl("subscriptions", org.stripeSubscriptionId)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-mono text-xs text-primary hover:underline"
-                >
-                  {org.stripeSubscriptionId}
-                </a>
-              ) : (
-                <p className="text-muted-foreground">—</p>
-              )}
+              <p className="text-xs text-muted-foreground">Plano</p>
+              <p className="text-xs">{org.mpPlanId ?? "—"}</p>
             </div>
             <p className="pt-1 text-xs text-muted-foreground">
               Portal do cliente: o tenant usa{" "}

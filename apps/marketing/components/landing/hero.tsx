@@ -61,7 +61,7 @@ export function Hero() {
           data-hero="brand"
           className="font-[family-name:var(--font-display)] text-[clamp(3.5rem,14vw,9.5rem)] font-semibold uppercase leading-[0.82] tracking-[-0.05em] text-ink"
         >
-          Oficina
+          Sua Oficina
         </p>
 
         <h1

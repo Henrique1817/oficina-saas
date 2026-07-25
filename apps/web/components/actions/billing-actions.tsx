@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button";
 
 export function BillingActions({
   canManage,
-  hasStripeCustomer,
+  hasSubscription,
 }: {
   canManage: boolean;
-  hasStripeCustomer: boolean;
+  hasSubscription: boolean;
 }) {
-  const [loading, setLoading] = useState<"checkout" | "portal" | null>(null);
+  const [loading, setLoading] = useState<"checkout" | "cancel" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   if (!canManage) {
     return (
@@ -25,28 +26,44 @@ export function BillingActions({
   async function startCheckout(interval: "monthly" | "yearly") {
     setLoading("checkout");
     setError(null);
+    setMessage(null);
     try {
-      const { url } = await apiFetch<{ url: string }>("/api/v1/billing/checkout", {
-        method: "POST",
-        body: JSON.stringify({ interval }),
-      });
-      window.location.href = url;
+      const data = await apiFetch<{ url?: string; initPoint?: string }>(
+        "/api/v1/billing/checkout",
+        {
+          method: "POST",
+          body: JSON.stringify({ interval }),
+        },
+      );
+      const initPoint = data.initPoint ?? data.url;
+      if (!initPoint) throw new Error("Link de pagamento indisponível");
+      window.location.href = initPoint;
     } catch (e) {
       setError(e instanceof Error ? e.message : "Falha no checkout");
       setLoading(null);
     }
   }
 
-  async function openPortal() {
-    setLoading("portal");
+  async function cancelPlan() {
+    if (
+      !window.confirm(
+        "Cancelar a assinatura? O acesso continua até o fim do período já pago, conforme regras do Mercado Pago.",
+      )
+    ) {
+      return;
+    }
+    setLoading("cancel");
     setError(null);
+    setMessage(null);
     try {
-      const { url } = await apiFetch<{ url: string }>("/api/v1/billing/portal", {
+      await apiFetch("/api/v1/billing/portal", {
         method: "POST",
+        body: JSON.stringify({ action: "cancel" }),
       });
-      window.location.href = url;
+      setMessage("Assinatura cancelada.");
+      window.location.reload();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Falha ao abrir portal");
+      setError(e instanceof Error ? e.message : "Falha ao cancelar");
       setLoading(null);
     }
   }
@@ -54,13 +71,18 @@ export function BillingActions({
   return (
     <div className="space-y-3">
       {error && <p className="text-sm text-danger">{error}</p>}
+      {message && <p className="text-sm text-ok">{message}</p>}
+      <p className="text-xs text-ink-mute">
+        Nenhum dado de cartão fica neste servidor — o pagamento é feito só no
+        Mercado Pago.
+      </p>
       <div className="flex flex-wrap gap-2">
         <Button
           type="button"
           disabled={loading !== null}
           onClick={() => startCheckout("monthly")}
         >
-          {loading === "checkout" ? "Redirecionando..." : "Assinar / cadastrar cartão (mensal)"}
+          {loading === "checkout" ? "Redirecionando..." : "Assinar mensal (R$ 97)"}
         </Button>
         <Button
           type="button"
@@ -68,16 +90,16 @@ export function BillingActions({
           disabled={loading !== null}
           onClick={() => startCheckout("yearly")}
         >
-          Plano anual
+          Plano anual (R$ 970)
         </Button>
-        {hasStripeCustomer && (
+        {hasSubscription && (
           <Button
             type="button"
             variant="secondary"
             disabled={loading !== null}
-            onClick={openPortal}
+            onClick={cancelPlan}
           >
-            {loading === "portal" ? "Abrindo..." : "Portal Stripe"}
+            {loading === "cancel" ? "Cancelando..." : "Cancelar assinatura"}
           </Button>
         )}
       </div>

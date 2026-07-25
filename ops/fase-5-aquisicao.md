@@ -15,7 +15,7 @@ Cadência: **10 mensagens/dia úteis** → ~50/semana.
 ## Canal 2 — Indicação
 
 Para cada design partner ativo: “conhece 2 donos que ainda usam caderno?”  
-Oferecer 1 mês grátis no anual deles se a indicação pagar (manual no Stripe cupom).
+Oferecer 1 mês grátis no anual deles se a indicação pagar (ajuste manual no Mercado Pago).
 
 ## Canal 3 — Conteúdo curto
 

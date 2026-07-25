@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint · typecheck · test
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PIPELINE_API_BASE: ${{ secrets.PIPELINE_API_BASE }}
+      PIPELINE_INGEST_SECRET: ${{ secrets.PIPELINE_INGEST_SECRET }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Prisma generate
+        run: pnpm db:generate
+
+      - name: Pipeline run start
+        id: pipe_start
+        if: ${{ env.PIPELINE_API_BASE != '' }}
+        continue-on-error: true
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq jq
+          chmod +x scripts/pipeline-report.sh
+          NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          RESP=$(./scripts/pipeline-report.sh upsert-run RUNNING "$NOW")
+          echo "run_id=$(echo "$RESP" | jq -r .id)" >> "$GITHUB_OUTPUT"
+
+      - name: Lint
+        id: lint
+        run: pnpm lint
+        continue-on-error: true
+
+      - name: Typecheck
+        id: typecheck
+        run: pnpm typecheck
+        continue-on-error: true
+
+      - name: Unit tests
+        id: test
+        run: pnpm test
+        continue-on-error: true
+
+      - name: Report steps
+        if: ${{ always() && env.PIPELINE_API_BASE != '' && steps.pipe_start.outputs.run_id != '' }}
+        continue-on-error: true
+        run: |
+          RUN_ID="${{ steps.pipe_start.outputs.run_id }}"
+          NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          report() {
+            local name="$1" order="$2" outcome="$3"
+            local st="SUCCESS"
+            [[ "$outcome" == "failure" ]] && st="FAILURE"
+            [[ "$outcome" == "cancelled" ]] && st="CANCELLED"
+            [[ "$outcome" == "skipped" ]] && st="SKIPPED"
+            ./scripts/pipeline-report.sh upsert-step "$RUN_ID" "$name" "$order" "$st" "outcome=$outcome" "" "$NOW"
+          }
+          report "lint" 1 "${{ steps.lint.outcome }}"
+          report "typecheck" 2 "${{ steps.typecheck.outcome }}"
+          report "test" 3 "${{ steps.test.outcome }}"
+
+          FINAL="SUCCESS"
+          [[ "${{ steps.lint.outcome }}" == "failure" || "${{ steps.typecheck.outcome }}" == "failure" || "${{ steps.test.outcome }}" == "failure" ]] && FINAL="FAILURE"
+          ./scripts/pipeline-report.sh upsert-run "$FINAL" "" "$NOW"
+
+      - name: Fail if any check failed
+        if: ${{ steps.lint.outcome == 'failure' || steps.typecheck.outcome == 'failure' || steps.test.outcome == 'failure' }}
+        run: exit 1

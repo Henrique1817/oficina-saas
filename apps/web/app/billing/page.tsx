@@ -44,7 +44,7 @@ export default async function BillingPage({
       )}
       {params.checkout === "success" && (
         <p className="border border-ok/40 bg-ok/10 px-3 py-2 text-sm text-ink-dim">
-          Cartão cadastrado. Trial de 14 dias ativo.
+          Assinatura autorizada no Mercado Pago. Trial de 14 dias ativo.
         </p>
       )}
 
@@ -64,7 +64,7 @@ export default async function BillingPage({
           <p className="border border-signal/40 bg-signal/10 px-3 py-2 text-sm text-ink-dim">
             Pagamento pendente — cerca de{" "}
             <strong className="text-signal">{graceLeft} dia(s)</strong> de acesso soft
-            restantes. Atualize o cartão para evitar o bloqueio.
+            restantes. Regularize o pagamento no Mercado Pago para evitar o bloqueio.
           </p>
         )}
         {!hasAccess && (
@@ -74,7 +74,7 @@ export default async function BillingPage({
         )}
         <BillingActions
           canManage={session.role === "ADMIN"}
-          hasStripeCustomer={Boolean(org.stripeCustomerId)}
+          hasSubscription={Boolean(org.mpPreapprovalId)}
         />
       </Card>
 

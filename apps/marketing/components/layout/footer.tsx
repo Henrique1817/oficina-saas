@@ -18,25 +18,25 @@ export function Footer() {
 
   return (
     <footer className="border-t border-line bg-bg-elevated">
-      <div className="container-wide section-pad grid gap-12 md:grid-cols-[1.4fr_1fr_1fr]">
-        <div>
-          <p className="font-[family-name:var(--font-display)] text-3xl font-semibold tracking-[0.12em] uppercase text-ink">
+      <div className="container-wide grid gap-8 py-10 sm:gap-10 sm:py-12 md:grid-cols-[1.4fr_1fr_1fr] md:gap-12 md:py-16">
+        <div className="min-w-0">
+          <p className="font-[family-name:var(--font-display)] text-2xl font-semibold tracking-[0.12em] uppercase text-ink sm:text-3xl">
             Oficina
           </p>
-          <p className="mt-4 max-w-sm text-sm leading-relaxed text-ink-dim">
+          <p className="mt-3 max-w-sm text-sm leading-relaxed text-ink-dim sm:mt-4">
             {siteConfig.tagline}
           </p>
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-5 flex w-full flex-col gap-2.5 sm:mt-6 sm:w-auto sm:flex-row sm:flex-wrap sm:gap-3">
             <a
               href={signupUrl()}
-              className="inline-flex bg-signal px-4 py-2.5 text-xs font-semibold text-bg transition hover:bg-signal-bright"
+              className="inline-flex w-full items-center justify-center bg-signal px-4 py-3 text-xs font-semibold text-bg transition hover:bg-signal-bright sm:w-auto sm:py-2.5"
               data-cursor="hot"
             >
               Trial 14 dias
             </a>
             <a
               href={loginUrl()}
-              className="inline-flex border border-line px-4 py-2.5 text-xs text-ink-dim transition hover:border-line-strong hover:text-ink"
+              className="inline-flex w-full items-center justify-center border border-line px-4 py-3 text-xs text-ink-dim transition hover:border-line-strong hover:text-ink sm:w-auto sm:py-2.5"
               data-cursor="hot"
             >
               Entrar no app
@@ -44,63 +44,67 @@ export function Footer() {
           </div>
         </div>
 
-        <div>
-          <p className="mono-label text-ink-mute">Produto</p>
-          <ul className="mt-4 space-y-2.5">
-            {productLinks.map((l) => (
-              <li key={l.href}>
-                <Link
-                  href={l.href}
-                  className="text-sm text-ink-dim transition hover:text-ink"
-                  data-cursor="hot"
-                >
-                  {l.label}
-                </Link>
-              </li>
-            ))}
-            {wa ? (
-              <li>
-                <a
-                  href={wa}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-ink-dim transition hover:text-ink"
-                  data-cursor="hot"
-                >
-                  WhatsApp vendas
-                </a>
-              </li>
-            ) : null}
-          </ul>
-        </div>
+        <div className="grid grid-cols-2 gap-6 sm:gap-8 md:contents">
+          <div>
+            <p className="mono-label text-ink-mute">Produto</p>
+            <ul className="mt-3 space-y-2 sm:mt-4 sm:space-y-2.5">
+              {productLinks.map((l) => (
+                <li key={l.href}>
+                  <Link
+                    href={l.href}
+                    className="text-sm text-ink-dim transition hover:text-ink"
+                    data-cursor="hot"
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+              {wa ? (
+                <li>
+                  <a
+                    href={wa}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-ink-dim transition hover:text-ink"
+                    data-cursor="hot"
+                  >
+                    WhatsApp vendas
+                  </a>
+                </li>
+              ) : null}
+            </ul>
+          </div>
 
-        <div>
-          <p className="mono-label text-ink-mute">Legal</p>
-          <ul className="mt-4 space-y-2.5">
-            {legalLinks.map((l) => (
-              <li key={l.href}>
-                <Link
-                  href={l.href}
-                  className="text-sm text-ink-dim transition hover:text-ink"
-                  data-cursor="hot"
-                >
-                  {l.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-8 font-[family-name:var(--font-mono)] text-[0.65rem] leading-relaxed text-ink-mute">
-            Não inclui nesta fase: {siteConfig.excludedScope.join(" · ")}.
-          </p>
+          <div>
+            <p className="mono-label text-ink-mute">Legal</p>
+            <ul className="mt-3 space-y-2 sm:mt-4 sm:space-y-2.5">
+              {legalLinks.map((l) => (
+                <li key={l.href}>
+                  <Link
+                    href={l.href}
+                    className="text-sm text-ink-dim transition hover:text-ink"
+                    data-cursor="hot"
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
 
       <div className="border-t border-line">
-        <div className="container-wide flex flex-col gap-2 py-5 sm:flex-row sm:items-center sm:justify-between">
-          <p className="font-[family-name:var(--font-mono)] text-[0.65rem] text-ink-mute">
-            © {new Date().getFullYear()} Oficina. Produto proprietário.
-          </p>
-          <p className="font-[family-name:var(--font-mono)] text-[0.65rem] text-ink-mute">
+        <div className="container-wide flex flex-col gap-3 py-4 sm:gap-2 sm:py-5 md:flex-row md:items-start md:justify-between">
+          <div className="space-y-1.5">
+            <p className="font-[family-name:var(--font-mono)] text-[0.65rem] text-ink-mute">
+              © {new Date().getFullYear()} Oficina. Produto proprietário.
+            </p>
+            <p className="max-w-xl font-[family-name:var(--font-mono)] text-[0.65rem] leading-relaxed text-ink-mute">
+              Não inclui nesta fase: {siteConfig.excludedScope.join(" · ")}.
+            </p>
+          </div>
+          <p className="font-[family-name:var(--font-mono)] text-[0.65rem] text-ink-mute md:text-right">
             R$ {siteConfig.priceMonthly}/mês · R$ {siteConfig.priceYearly}/ano · trial{" "}
             {siteConfig.trialDays} dias
           </p>

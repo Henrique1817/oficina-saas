@@ -1,30 +1,39 @@
-# Fase 2 — Billing
+# Fase 2 — Billing (Mercado Pago)
 
 ## Fluxo
 1. `/signup` → cria user Supabase + org + membership ADMIN
-2. Se Stripe configurado → Checkout (14 dias trial + cartão obrigatório)
-3. Webhook sincroniza `organizations.plan_status`
+2. Se Mercado Pago configurado → PreApproval (14 dias trial + checkout MP)
+3. Webhook sincroniza `organizations.plan_status` (reconsulta API oficial)
 4. Middleware bloqueia app se `PAST_DUE` / `CANCELED` / trial expirado → `/billing`
 5. `withAuth` aplica o mesmo gate nas APIs `/api/v1/*` → **402** `SUBSCRIPTION_REQUIRED` (exceto checkout/portal e `/me`)
 
 ## Env necessárias
-- `STRIPE_SECRET_KEY`
-- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (opcional no server checkout)
-- `STRIPE_PRICE_MONTHLY` / `STRIPE_PRICE_YEARLY`
-- `STRIPE_WEBHOOK_SECRET`
-- `NEXT_PUBLIC_APP_URL`
+- `MERCADOPAGO_ACCESS_TOKEN` (Produção: aba **Produção**; Teste: `TEST-…`)
+- `MERCADOPAGO_WEBHOOK_SECRET` (obrigatório em produção)
+- `MERCADOPAGO_USE_SANDBOX=false` em produção (nunca misturar `sandbox_init_point` com token de produção)
+- `NEXT_PUBLIC_APP_URL` (sem barra final)
 
-## Webhook Stripe
-Endpoint: `POST {NEXT_PUBLIC_APP_URL}/api/v1/billing/webhook`
+## Webhook Mercado Pago
+Endpoint: `POST {NEXT_PUBLIC_APP_URL}/api/webhooks/mercadopago`
 
-Eventos:
-- `checkout.session.completed`
-- `customer.subscription.updated`
-- `customer.subscription.deleted`
-- `invoice.paid`
-- `invoice.payment_failed`
+Health: `GET` → `{ ok: true, service: "mercadopago-webhook" }`
 
-Dashboard: https://dashboard.stripe.com/webhooks
+Tópicos:
+- `subscription_preapproval`
+- `subscription_authorized_payment`
+- `payment`
 
-## Sem Stripe no .env
+Validação: HMAC `x-signature` + `x-request-id` + `data.id` (manifesto oficial).
+Após validar: **GET** na API MP (não confiar no body) + claim idempotente.
+
+Painel: Suas integrações → Webhooks
+
+## Sem Mercado Pago no .env
 Signup ainda cria a oficina em `TRIALING` (14 dias). Checkout fica para `/billing` depois.
+
+## Armadilhas
+1. Token `APP_USR-` existe em teste e produção — copiar da aba certa.
+2. App com `sandbox_mode: true` no painel MP quebra pagamento real.
+3. Vendedor não pode assinar o próprio plano com a mesma conta MP.
+4. Testar com outra conta MP real em janela anônima.
+5. Após mudar env na Vercel: **redeploy**.

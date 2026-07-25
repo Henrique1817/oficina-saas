@@ -49,7 +49,7 @@ export default function FuncionalidadesPage() {
           </h1>
           <p className="mt-5 max-w-xl text-base leading-relaxed text-ink-dim">
             Não é só CRM. Cadastro → orçamento → OS → estoque → ferramenta — com
-            billing Stripe e trial de 14 dias.
+            billing Mercado Pago e trial de 14 dias.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <TrialCta />

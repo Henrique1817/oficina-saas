@@ -21,7 +21,7 @@ export default async function SuportePage({
           Suporte
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Busca por e-mail, nome, slug ou ID Stripe · abra a oficina para a timeline
+          Busca por e-mail, nome, slug ou ID Mercado Pago · abra a oficina para a timeline
         </p>
       </div>
 
@@ -30,7 +30,7 @@ export default async function SuportePage({
           <input
             name="q"
             defaultValue={query}
-            placeholder="ex.: legacy, henri@, cus_…"
+            placeholder="ex.: legacy, henri@, preapproval_…"
             className="min-w-[220px] flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
           />
           <button

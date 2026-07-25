@@ -7,9 +7,8 @@ import {
 import { parseJson } from "@/server/lib/parse";
 import { organizationRepository } from "@/server/modules/organizations/organization.repository";
 import {
-  createOrGetStripeCustomer,
-  createTrialCheckoutSession,
-  isStripeConfigured,
+  createSubscriptionCheckout,
+  isMercadoPagoConfigured,
 } from "@/server/modules/billing";
 import { prisma } from "@oficina/database";
 
@@ -32,28 +31,24 @@ export const POST = withUserAuth(async (ctx, request) => {
 
   let checkoutUrl: string | null = null;
 
-  if (isStripeConfigured()) {
+  if (isMercadoPagoConfigured()) {
     try {
-      const customer = await createOrGetStripeCustomer({
-        email: ctx.email,
-        name: organization.name,
+      const checkout = await createSubscriptionCheckout({
         organizationId: organization.id,
-      });
-      await organizationRepository.updateBilling(organization.id, {
-        stripeCustomerId: customer.id,
-      });
-      const session = await createTrialCheckoutSession({
-        customerId: customer.id,
-        customerEmail: ctx.email,
-        organizationId: organization.id,
+        payerEmail: ctx.email,
+        organizationName: organization.name,
         interval: parsed.data.interval,
         successPath: "/onboarding/setup?checkout=success",
         cancelPath: "/billing?checkout=canceled",
       });
-      checkoutUrl = session.url;
+      await organizationRepository.updateBilling(organization.id, {
+        mpPreapprovalId: checkout.preapprovalId,
+        mpPlanId: parsed.data.interval,
+      });
+      checkoutUrl = checkout.initPoint;
     } catch (err) {
       console.error("[signup checkout]", err);
-      // Org criada; usuário completa cartão depois em /billing
+      // Org criada; usuário completa pagamento depois em /billing
     }
   }
 

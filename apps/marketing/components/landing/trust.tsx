@@ -6,8 +6,8 @@ const pillars = [
     body: "Cada organização tem o próprio ambiente. Dados da sua oficina não se misturam com os de outra.",
   },
   {
-    title: "Cobrança com Stripe",
-    body: "Checkout e portal self-serve. Trial, plano ativo, inadimplência e cancelamento — transparente.",
+    title: "Cobrança com Mercado Pago",
+    body: "Checkout e gestão em /billing. Trial, plano ativo, inadimplência e cancelamento — transparente.",
   },
   {
     title: "Papéis no chão de fábrica",

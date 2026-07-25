@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import {
   STATUS_LABEL,
   estimateMrr,
-  stripeDashboardUrl,
+  mpPreapprovalUrl,
 } from "@/lib/billing-metrics";
 import { BillingExemptButton } from "./billing-exempt-button";
 import { requirePlatformSession } from "@/lib/session";
@@ -25,8 +25,9 @@ export default async function PagamentosPage() {
       pastDueAt: true,
       suspendedAt: true,
       billingExempt: true,
-      stripeCustomerId: true,
-      stripeSubscriptionId: true,
+      mpPayerId: true,
+      mpPreapprovalId: true,
+      mpPlanId: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -54,7 +55,7 @@ export default async function PagamentosPage() {
   const pastDueQueue = pastDue.filter((o) => !o.billingExempt);
   const churn30d = canceled.filter((o) => o.updatedAt.getTime() >= days30).length;
   const mrrEstimate = estimateMrr(paid.length);
-  const withSub = orgs.filter((o) => o.stripeSubscriptionId);
+  const withSub = orgs.filter((o) => o.mpPreapprovalId);
 
   return (
     <div className="space-y-6">
@@ -98,7 +99,7 @@ export default async function PagamentosPage() {
 
       <p className="text-xs text-muted-foreground">
         *CANCELED com <code>updatedAt</code> nos últimos 30 dias · Cortesia: {courtesy.length} org(s)
-        · Assinaturas Stripe: {withSub.length}
+        · Assinaturas Mercado Pago: {withSub.length}
       </p>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -122,14 +123,14 @@ export default async function PagamentosPage() {
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {o.stripeCustomerId && (
+                    {o.mpPreapprovalId && (
                       <a
-                        href={stripeDashboardUrl("customers", o.stripeCustomerId)}
+                        href={mpPreapprovalUrl(o.mpPreapprovalId)}
                         target="_blank"
                         rel="noreferrer"
                         className="text-xs text-primary hover:underline"
                       >
-                        Stripe
+                        Mercado Pago
                       </a>
                     )}
                     <BillingExemptButton organizationId={o.id} exempt={o.billingExempt} canWrite={canBillingWrite} />
@@ -173,7 +174,7 @@ export default async function PagamentosPage() {
       </div>
 
       <Card>
-        <h2 className="mb-3 font-semibold">Cobrança (com assinatura Stripe)</h2>
+        <h2 className="mb-3 font-semibold">Cobrança (com assinatura Mercado Pago)</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -182,7 +183,7 @@ export default async function PagamentosPage() {
                 <th className="pb-2 pr-3">Status</th>
                 <th className="pb-2 pr-3">Trial</th>
                 <th className="pb-2 pr-3">Past due</th>
-                <th className="pb-2 pr-3">Stripe</th>
+                <th className="pb-2 pr-3">Mercado Pago</th>
                 <th className="pb-2">Cortesia</th>
               </tr>
             </thead>
@@ -190,7 +191,7 @@ export default async function PagamentosPage() {
               {withSub.length === 0 && (
                 <tr>
                   <td colSpan={6} className="py-4 text-muted-foreground">
-                    Nenhuma org com <code>stripeSubscriptionId</code>
+                    Nenhuma org com <code>mpPreapprovalId</code>
                   </td>
                 </tr>
               )}
@@ -211,25 +212,23 @@ export default async function PagamentosPage() {
                   </td>
                   <td className="py-2 pr-3">
                     <div className="flex flex-col gap-0.5">
-                      {o.stripeCustomerId && (
+                      {o.mpPlanId && (
+                        <span className="text-xs text-muted-foreground">{o.mpPlanId}</span>
+                      )}
+                      {o.mpPreapprovalId && (
                         <a
-                          href={stripeDashboardUrl("customers", o.stripeCustomerId)}
+                          href={mpPreapprovalUrl(o.mpPreapprovalId)}
                           target="_blank"
                           rel="noreferrer"
                           className="text-xs text-primary hover:underline"
                         >
-                          Customer
+                          Preapproval
                         </a>
                       )}
-                      {o.stripeSubscriptionId && (
-                        <a
-                          href={stripeDashboardUrl("subscriptions", o.stripeSubscriptionId)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-xs text-primary hover:underline"
-                        >
-                          Subscription
-                        </a>
+                      {o.mpPayerId && (
+                        <span className="font-mono text-[10px] text-muted-foreground">
+                          payer {o.mpPayerId}
+                        </span>
                       )}
                     </div>
                   </td>

@@ -73,12 +73,12 @@ export default async function GrowthPage() {
       ok: Boolean(process.env.CRON_SECRET && process.env.CRON_SECRET.length > 8),
     },
     {
-      id: "stripe",
-      label: "Stripe secret configurada",
+      id: "mercadopago",
+      label: "Mercado Pago access token configurado",
       ok: Boolean(
-        process.env.STRIPE_SECRET_KEY &&
-          !process.env.STRIPE_SECRET_KEY.includes("placeholder") &&
-          process.env.STRIPE_SECRET_KEY.length > 10,
+        process.env.MERCADOPAGO_ACCESS_TOKEN &&
+          !process.env.MERCADOPAGO_ACCESS_TOKEN.includes("placeholder") &&
+          process.env.MERCADOPAGO_ACCESS_TOKEN.length > 20,
       ),
     },
     {

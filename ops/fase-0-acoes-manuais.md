@@ -10,35 +10,32 @@ Checklist para fechar a fundação SaaS. Marque ao concluir.
 - [ ] Confirmar que `.env.example` e `apps/web/.env.local.example` só têm placeholders
 - [ ] Se as chaves antigas estiveram em git/histórico público, considerar o projeto comprometido até rotacionar
 
-## Stripe
+## Mercado Pago
 
-Conta MCP conectada: **Barbearia-SaaS** (`acct_1Tu0SsQyNtoAJlmk`).
+Ver [`ops/fase-2-billing.md`](fase-2-billing.md) para fluxo completo.
 
-Produtos criados em **live mode** (produção):
+Planos no código: **mensal R$ 97** / **anual R$ 970** · trial **14 dias** · cartão no cadastro.
 
-| Item | ID |
-|------|-----|
-| Product `Oficina` | `prod_UtoBr78SZ4jhHB` |
-| Mensal R$ 97 | `price_1Tu0Z8QyNtoAJlmkDBwGZxIN` → `STRIPE_PRICE_MONTHLY` |
-| Anual R$ 970 | `price_1Tu0Z7QyNtoAJlmksl3PgHlb` → `STRIPE_PRICE_YEARLY` |
+| Env | Uso |
+|-----|-----|
+| `MERCADOPAGO_ACCESS_TOKEN` | Token de produção (`APP_USR-…`) ou teste (`TEST-…`) |
+| `MERCADOPAGO_WEBHOOK_SECRET` | Assinatura HMAC do webhook (obrigatório em produção) |
+| `MERCADOPAGO_USE_SANDBOX` | `false` em produção |
 
-- [x] Product + Prices criados via MCP
-- [x] Política de trial no código: **14 dias** + **cartão obrigatório no cadastro** + cobrança automática (`createTrialCheckoutSession`)
-- [x] Metadata do Product Stripe: `trial_days=14`, `card_required_at_signup=true`
-- [ ] Colar Price IDs e keys no `.env` local / Vercel
-- [ ] Copiar Publishable key → `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
-- [ ] Secret / Restricted Key → `STRIPE_SECRET_KEY` (**live** se for usar esses prices; `sk_test_` só serve se criar prices equivalentes em Test)
-- [ ] Customer Portal: ativar cancelamento / troca de método de pagamento
-- [ ] Webhook na Fase 2 (`/api/v1/billing/webhook`) → `STRIPE_WEBHOOK_SECRET`
-- [ ] (Recomendado) No Dashboard, modo **Test**, duplicar Product/Prices para desenvolvimento local
+- [x] Política de trial no código: **14 dias** + **cartão obrigatório no cadastro** + cobrança automática (PreApproval MP)
+- [ ] Colar credenciais no `.env` local / Vercel
+- [ ] Copiar Access Token → `MERCADOPAGO_ACCESS_TOKEN` (aba **Produção** ou **Teste** correta)
+- [ ] Webhook no painel MP → `/api/webhooks/mercadopago` → `MERCADOPAGO_WEBHOOK_SECRET`
+- [ ] Confirmar `MERCADOPAGO_USE_SANDBOX=false` em produção
+- [ ] (Recomendado) Testar com outra conta MP real em janela anônima
 
 ### Política de cobrança (fixada)
 
-1. Ao finalizar o cadastro da oficina → Checkout Stripe (`mode: subscription`).
-2. Cliente **cadastra o cartão** (`payment_method_collection: always`).
+1. Ao finalizar o cadastro da oficina → PreApproval Mercado Pago (14 dias trial).
+2. Cliente **cadastra o cartão** no checkout MP.
 3. Assinatura entra em **trial de 14 dias** (R$ 0 nesse período).
-4. No dia 15 o Stripe **cobra automaticamente** o plano (mensal ou anual).
-5. Se não houver cartão válido no fim do trial → assinatura **cancela**.
+4. No dia 15 o Mercado Pago **cobra automaticamente** o plano (mensal R$ 97 ou anual R$ 970).
+5. Se não houver pagamento válido no fim do trial → assinatura **cancela** ou entra em inadimplência (grace 3 dias).
 
 ## Vercel + domínio
 

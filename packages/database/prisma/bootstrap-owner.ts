@@ -93,8 +93,8 @@ async function main() {
       planStatus: "ACTIVE",
       trialEndsAt: null,
       pastDueAt: null,
-      stripeCustomerId: null,
-      stripeSubscriptionId: null,
+      mpPayerId: null,
+      mpPreapprovalId: null,
       billingExempt: true,
     },
     create: {
@@ -106,7 +106,7 @@ async function main() {
       billingExempt: true,
     },
   });
-  console.log(`Org: ${org.name} (${org.slug}) ACTIVE + cortesia — sem Stripe/cobrança`);
+  console.log(`Org: ${org.name} (${org.slug}) ACTIVE + cortesia — sem Mercado Pago/cobrança`);
 
   await prisma.stockLocation.upsert({
     where: { organizationId_name: { organizationId: org.id, name: "Oficina Principal" } },

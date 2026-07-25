@@ -6,11 +6,11 @@ import { siteConfig } from "@/lib/site";
 const faqs = [
   {
     q: "Por que preciso de cartão no trial?",
-    a: "O trial de 14 dias exige cartão no cadastro para ativar a assinatura Stripe. A cobrança começa só depois do período gratuito — sem surpresa no meio do teste.",
+    a: "O trial de 14 dias exige cartão no cadastro para ativar a assinatura Mercado Pago. A cobrança começa só depois do período gratuito — sem surpresa no meio do teste.",
   },
   {
     q: "Como cancelo?",
-    a: "Pelo Customer Portal do Stripe, dentro do app (billing). Sem ligação, sem “fale com o gerente”.",
+    a: "Em Assinatura (`/billing`) → cancelar assinatura. Sem ligação, sem “fale com o gerente”.",
   },
   {
     q: "Qual a diferença entre Admin, Gerente e Mecânico?",

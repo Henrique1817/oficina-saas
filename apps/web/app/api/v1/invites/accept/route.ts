@@ -35,6 +35,14 @@ export const POST = withUserAuth(async (ctx, request) => {
           status: 403,
         },
       };
+      if (e.message.startsWith("ALREADY_MEMBER:")) {
+        const role = e.message.split(":")[1];
+        return apiError(
+          `Você já faz parte desta oficina${role ? ` (${role})` : ""}. Um e-mail só pode ter um papel.`,
+          409,
+          "ALREADY_MEMBER",
+        );
+      }
       const hit = map[e.message];
       if (hit) return apiError(hit.message, hit.status);
     }

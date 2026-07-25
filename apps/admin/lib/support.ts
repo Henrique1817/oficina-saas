@@ -17,8 +17,8 @@ export async function searchSupport(q: string) {
         OR: [
           { name: { contains: query, mode: "insensitive" } },
           { slug: { contains: query, mode: "insensitive" } },
-          { stripeCustomerId: { contains: query, mode: "insensitive" } },
-          { stripeSubscriptionId: { contains: query, mode: "insensitive" } },
+          { mpPayerId: { contains: query, mode: "insensitive" } },
+          { mpPreapprovalId: { contains: query, mode: "insensitive" } },
         ],
       },
       take: 25,
@@ -87,12 +87,12 @@ export async function buildOrgTimeline(organizationId: string): Promise<Timeline
     });
   }
 
-  if (org.stripeCustomerId) {
+  if (org.mpPreapprovalId) {
     events.push({
       at: org.updatedAt,
-      kind: "stripe",
-      label: "Stripe customer vinculado",
-      meta: org.stripeCustomerId,
+      kind: "mercadopago",
+      label: "Assinatura Mercado Pago vinculada",
+      meta: org.mpPreapprovalId,
     });
   }
 

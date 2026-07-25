@@ -1,6 +1,6 @@
 # Deploy com Docker
 
-A app sobe em **qualquer VPS / cloud** com Docker. Auth e Postgres continuam no **Supabase** (e Stripe/Resend externos).
+A app sobe em **qualquer VPS / cloud** com Docker. Auth e Postgres continuam no **Supabase** (e Mercado Pago/Resend externos).
 
 ## Pré-requisitos
 
@@ -91,7 +91,6 @@ docker build -t oficina-web \
   --build-arg NEXT_PUBLIC_SUPABASE_URL=... \
   --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=... \
   --build-arg NEXT_PUBLIC_APP_URL=https://seu-dominio.com \
-  --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=... \
   .
 
 docker run -d --name oficina-web -p 3000:3000 --env-file .env oficina-web

@@ -75,6 +75,25 @@ export default async function OverviewPage() {
         · Autonomia: {h.autonomy.score}/{h.autonomy.total}
       </p>
 
+      {h.pipeline.latestCd && h.pipeline.latestCd.status === "FAILURE" && (
+        <Card className="border-danger/40 bg-danger/5 space-y-2">
+          <h2 className="font-semibold text-danger">Último deploy falhou</h2>
+          <p className="text-sm text-muted-foreground">
+            {h.pipeline.latestCd.workflow} ·{" "}
+            {h.pipeline.latestCd.createdAt.toLocaleString("pt-BR")}
+            {h.pipeline.latestCd.failedSteps.length > 0
+              ? ` · ${h.pipeline.latestCd.failedSteps.join(", ")}`
+              : ""}
+          </p>
+          <Link
+            href={`/pipelines/${h.pipeline.latestCd.id}`}
+            className="text-xs text-primary hover:underline"
+          >
+            Ver passo a passo →
+          </Link>
+        </Card>
+      )}
+
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="space-y-2">
           <h2 className="font-semibold">Autonomia (resumo)</h2>
@@ -88,9 +107,14 @@ export default async function OverviewPage() {
               </li>
             ))}
           </ul>
-          <Link href="/saude" className="text-xs text-primary hover:underline">
-            Ver crons, uso e export →
-          </Link>
+          <div className="flex gap-3 text-xs">
+            <Link href="/saude" className="text-primary hover:underline">
+              Ver crons, uso e export →
+            </Link>
+            <Link href="/pipelines" className="text-primary hover:underline">
+              Pipelines →
+            </Link>
+          </div>
         </Card>
 
         {h.acquisition.trialsEndingSoon.length > 0 ? (

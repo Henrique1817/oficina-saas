@@ -14,7 +14,7 @@ Painel administrativo **separado do produto das oficinas**, para a equipe Oficin
 
 - Produto oficinas: `apps/web` (Docker :3000)
 - Embrião: `/admin/growth` (MRR, lista orgs, scorecard) gated por `PLATFORM_ADMIN_EMAILS`
-- Dados: `Organization.planStatus`, Stripe IDs, memberships, crons de trial/dunning
+- Dados: `Organization.planStatus`, IDs Mercado Pago (`mpPayerId`, `mpPreapprovalId`), memberships, crons de trial/dunning
 
 ---
 
@@ -38,7 +38,7 @@ Painel administrativo **separado do produto das oficinas**, para a equipe Oficin
 
 **Status:** Fase A entregue — ver `ops/console-plataforma.md`.
 
-**Não fazer nesta fase:** CRUD pesado, Stripe live sync UI.
+**Não fazer nesta fase:** CRUD pesado, sync UI Mercado Pago live.
 
 ---
 
@@ -49,7 +49,7 @@ Painel administrativo **separado do produto das oficinas**, para a equipe Oficin
 | Entrega | Detalhe |
 |---------|---------|
 | Lista | Nome, slug, status plano, criada em, #membros, #OS, #clientes, busca/filtro |
-| Detalhe | Dados org, trial/pastDue, Stripe customer/sub IDs (link Dashboard Stripe) |
+| Detalhe | Dados org, trial/pastDue, IDs MP payer/preapproval (link painel Mercado Pago) |
 | Ações | Ativar / suspender acesso (flag ou `planStatus`), estender trial, nota interna |
 | Impersonate | “Abrir como ADMIN da org” com cookie/session scoped + audit log |
 
@@ -65,13 +65,13 @@ Painel administrativo **separado do produto das oficinas**, para a equipe Oficin
 
 ## Fase C — Pagamentos e receita
 
-**Meta:** visão financeira sem abrir o Stripe a cada dúvida.
+**Meta:** visão financeira sem abrir o Mercado Pago a cada dúvida.
 
 | Entrega | Detalhe |
 |---------|---------|
 | Dashboard $ | MRR estimado, ACTIVE, TRIALING, PAST_DUE, CANCELED, churn 30d |
-| Lista cobrança | Orgs com `stripeSubscriptionId`, status, trialEndsAt, pastDueAt |
-| Ações | Link Customer Portal / Stripe; marcar “cortesia” (`billingExempt` se ainda não existir) |
+| Lista cobrança | Orgs com `mpPreapprovalId`, status, trialEndsAt, pastDueAt |
+| Ações | Link `/billing` (cancelar assinatura); marcar “cortesia” (`billingExempt` se ainda não existir) |
 | Alertas | Fila PAST_DUE + trials acabando (reuso da lógica dos crons) |
 
 **Critério de saída**
@@ -113,7 +113,7 @@ Painel administrativo **separado do produto das oficinas**, para a equipe Oficin
 |---------|---------|
 | Aquisição | Signups / semana, conversão trial→pago |
 | Uso | OS criadas, orgs ativas (login recente se houver), estoque/OS por tenant top |
-| Autonomia | Status crons (último run), Resend/Stripe configurados (scorecard) |
+| Autonomia | Status crons (último run), Resend/Mercado Pago configurados (scorecard) |
 | Ops | Fricção / go-live checklist agregado (opcional, CSV → DB depois) |
 
 **Critério de saída**
@@ -153,7 +153,7 @@ MVP do console (**A→F**) completo.
 |------|------|------------------|
 | **A** | App + auth equipe | Pequeno |
 | **B** | Tenants + impersonate | Médio |
-| **C** | $ / Stripe visão | Médio |
+| **C** | $ / Mercado Pago visão | Médio |
 | **D** | RBAC equipe | Pequeno–médio |
 | **E** | Dashboards | Médio |
 | **F** | Hardening | Contínuo / médio |

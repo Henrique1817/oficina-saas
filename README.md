@@ -2,7 +2,7 @@
 
 **A oficina no controle — OS, estoque e orçamento sem planilha.**
 
-SaaS multi-tenant para oficinas mecânicas brasileiras. Cada oficina tem seu ambiente isolado: clientes, veículos, peças, ferramentas e ordens de serviço em um só lugar — com assinatura Stripe, trial de 14 dias e um console interno para a equipe da plataforma operar, sustentar e crescer.
+SaaS multi-tenant para oficinas mecânicas brasileiras. Cada oficina tem seu ambiente isolado: clientes, veículos, peças, ferramentas e ordens de serviço em um só lugar — com assinatura Mercado Pago, trial de 14 dias e um console interno para a equipe da plataforma operar, sustentar e crescer.
 
 | | |
 |---|---|
@@ -18,7 +18,7 @@ SaaS multi-tenant para oficinas mecânicas brasileiras. Cada oficina tem seu amb
 1. **Resolve o dia a dia da oficina** — não é só CRM: fecha o ciclo cadastro → orçamento → OS → estoque → ferramenta.
 2. **Produto SaaS de verdade** — multi-tenant, billing, dunning, invites, onboarding e gate de assinatura (páginas + API).
 3. **Operação escalável** — console de plataforma com suporte, auditoria, impersonação, MRR e saúde do negócio.
-4. **Stack moderna e deployável** — Next.js 15, Supabase, Prisma, Stripe, Docker / Vercel.
+4. **Stack moderna e deployável** — Next.js 15, Supabase, Prisma, Mercado Pago, Docker / Vercel.
 5. **Pronto para soft launch** — fluxo de signup, trial, checklist go-live e automações (estoque baixo, fim de trial, cobrança).
 
 ---
@@ -47,10 +47,10 @@ Patrimônio da oficina: retirada, devolução e manutenção — menos “ferram
 Papéis **Admin**, **Gerente** e **Mecânico**. O admin convida a equipe por link (e-mail opcional via Resend). Mecânico opera com restrições sensatas (ex.: OS atribuída).
 
 ### Assinatura e self-serve
-Checkout Stripe, Customer Portal, status de plano (trial / ativo / inadimplente / cancelado). Sem plano válido (após grace de 3 dias em `PAST_DUE`), o app e a API param — o dono vai para `/billing` e regulariza.
+Checkout Mercado Pago, gestão em `/billing` (cancelar assinatura), status de plano (trial / ativo / inadimplente / cancelado). Sem plano válido (após grace de 3 dias em `PAST_DUE`), o app e a API param — o dono vai para `/billing` e regulariza.
 
 ### Onboarding e go-live
-Criação da oficina, setup guiado e checklist de prontidão (dados, Stripe, primeira OS faturada) para a oficina começar a usar de verdade.
+Criação da oficina, setup guiado e checklist de prontidão (dados, Mercado Pago, primeira OS faturada) para a oficina começar a usar de verdade.
 
 ### Ajuda e landing
 Landing comercial, FAQ de preços/trial (`/ajuda`), login/signup e páginas legais (`/termos`, `/privacidade`).
@@ -64,11 +64,11 @@ Console separado (porta **3001** em local) para quem vende e sustenta o produto 
 | Módulo | Facilidade |
 |--------|------------|
 | **Overview** | Panorama operacional da base |
-| **Oficinas** | Busca, detalhe, suspensão/reativação, extensão de trial, nota interna, link Stripe |
+| **Oficinas** | Busca, detalhe, suspensão/reativação, extensão de trial, nota interna, link Mercado Pago |
 | **Impersonação** | Entrar na conta do tenant (token único + banner + auditoria) para suporte real |
 | **Pagamentos** | MRR estimado, filas PAST_DUE, trials acabando, **cortesia** (`billingExempt`) |
 | **Saúde** | Signups, conversão trial→pago, volume de OS, status dos crons; export CSV de métricas |
-| **Suporte** | Lookup por e-mail, nome, slug ou ID Stripe + timeline da oficina |
+| **Suporte** | Lookup por e-mail, nome, slug ou ID Mercado Pago + timeline da oficina |
 | **Auditoria** | Log global de ações sensíveis (suspender, impersonar, trial, cortesia, equipe) |
 | **Equipe** | RBAC interno: **Owner**, **Support**, **Finance**, **Viewer** |
 
@@ -87,7 +87,7 @@ Signup → Trial 14 dias → Uso no workshop → Cobrança automática
 ```
 
 - **Crons** (protegidos por `CRON_SECRET`): estoque baixo, trial acabando, dunning.
-- **Webhook Stripe**: sincroniza assinatura e status do plano.
+- **Webhook Mercado Pago** (`/api/webhooks/mercadopago`): sincroniza assinatura e status do plano.
 - **E-mails** (Resend, opcional): convite, fim de trial, falha de pagamento, estoque baixo.
 - **Métricas**: scorecard no admin + export CSV; histórico manual em `ops/metrics.csv`.
 
@@ -103,7 +103,7 @@ Documentação de go-to-market e operação: pasta [`ops/`](ops/).
 | Monorepo | **Turborepo** + **pnpm** (Node 20+) |
 | Banco | **PostgreSQL** (Supabase) + **Prisma** |
 | Auth | **Supabase Auth** (sessão cookie + Bearer na API) |
-| Cobrança | **Stripe** (Checkout, Portal, webhooks) |
+| Cobrança | **Mercado Pago** (PreApproval, `/billing`, webhooks) |
 | E-mail | **Resend** (opcional) |
 | Deploy | **Vercel** (produto) e/ou **Docker Compose** (web + admin) |
 | Validação | **Zod** (`@oficina/shared`) |
@@ -141,7 +141,7 @@ Documentação de go-to-market e operação: pasta [`ops/`](ops/).
 | `/workshop` | Todos | Dashboard, OS, ferramentas |
 | `/manager` | Todos* | Clientes, peças / estoque |
 | `/admin` (tenant) | Admin da oficina | Usuários, go-live, growth (operador) |
-| `/billing` | Admin | Assinatura Stripe |
+| `/billing` | Admin | Assinatura Mercado Pago |
 | `/onboarding` | Novo tenant | Criar e configurar a oficina |
 | `admin` app | Equipe Oficina | Operar a plataforma |
 
@@ -164,17 +164,34 @@ Validação Zod em toda entrada sensível; erros padronizados (`apiSuccess` / `a
 - Node.js **20+**
 - pnpm **9+**
 - Projeto [Supabase](https://supabase.com) (Postgres + Auth)
-- Conta [Stripe](https://stripe.com) (produção/teste)
+- Conta [Mercado Pago](https://www.mercadopago.com.br/developers) (produção/teste)
 - (Opcional) [Resend](https://resend.com) para e-mails
 
 ```bash
-cp .env.example .env   # preencha Supabase, Stripe, CRON_SECRET, URLs
+cp .env.example .env   # preencha Supabase, Mercado Pago, CRON_SECRET, URLs
 pnpm install
 pnpm db:generate
 pnpm --filter @oficina/database db:migrate:deploy
 pnpm db:seed
 pnpm dev               # web :3000 — ou pnpm dev:web / pnpm dev:admin
 ```
+
+### Mercado Pago (assinaturas)
+
+| Variável | Uso |
+|----------|-----|
+| `MERCADOPAGO_ACCESS_TOKEN` | Credencial **Produção** (`APP_USR-…`) ou teste (`TEST-…`) — copiar da aba certa |
+| `MERCADOPAGO_WEBHOOK_SECRET` | Assinatura secreta do webhook (obrigatório em produção) |
+| `MERCADOPAGO_USE_SANDBOX` | `false` em produção (só `init_point`); `true` só em teste (`sandbox_init_point`) |
+| `NEXT_PUBLIC_APP_URL` | URL pública sem barra final |
+
+Webhook no painel MP: `{NEXT_PUBLIC_APP_URL}/api/webhooks/mercadopago`
+
+Planos resolvidos no servidor: **R$ 97/mês** · **R$ 970/ano** · trial **14 dias**. Cartão só no Mercado Pago — nada de cartão no nosso servidor.
+
+**Armadilhas:** (1) token `APP_USR-` existe em teste e produção; (2) app com `sandbox_mode` no painel MP quebra cobrança real; (3) nunca misturar `sandbox_init_point` com token de produção; (4) **vendedor não pode pagar a própria assinatura** com a mesma conta MP — teste com outra conta em janela anônima; (5) após mudar env na Vercel, faça **redeploy**.
+
+Detalhes: [`ops/fase-2-billing.md`](ops/fase-2-billing.md).
 
 Docker: ver [`ops/docker.md`](ops/docker.md) (`web` + `admin`).
 
@@ -222,8 +239,9 @@ Hoje o produto **não** inclui (de propósito, nesta fase): NF-e, multi-filial, 
 
 | Doc | Conteúdo |
 |-----|----------|
+| [`ops/pipeline-producao.md`](ops/pipeline-producao.md) | CI/CD GitHub Actions + logs no admin |
 | [`ops/console-plataforma.md`](ops/console-plataforma.md) | Console admin |
-| [`ops/fase-2-billing.md`](ops/fase-2-billing.md) | Stripe, trial, gates |
+| [`ops/fase-2-billing.md`](ops/fase-2-billing.md) | Mercado Pago, trial, gates |
 | [`ops/docker.md`](ops/docker.md) | Compose web + admin |
 | [`ops/support-templates.md`](ops/support-templates.md) | Templates de suporte |
 | [`ops/whatsapp-scripts.md`](ops/whatsapp-scripts.md) | Scripts de aquisição |

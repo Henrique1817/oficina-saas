@@ -124,7 +124,7 @@ export default async function PilotosPage() {
             <h2 className="font-semibold">Provisionar piloto</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Cria oficina com cortesia, marca design partner, local de estoque e convite ADMIN
-              (30 dias). Sem Stripe.
+              (30 dias). Sem Mercado Pago.
             </p>
           </div>
           <ProvisionPilotForm />
