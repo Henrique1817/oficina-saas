@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { ORG_COOKIE, rolesForPath } from "@oficina/auth";
+import { ORG_COOKIE, rolesForPath } from "@oficina/auth/roles";
 import { updateSession } from "@/lib/supabase/middleware";
 import { createClient } from "@supabase/supabase-js";
 import {

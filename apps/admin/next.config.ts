@@ -12,11 +12,21 @@ const { loadEnvConfig } = require("@next/env") as {
 };
 loadEnvConfig(monorepoRoot);
 
+const { PrismaPlugin } = require("@prisma/nextjs-monorepo-workaround-plugin") as {
+  PrismaPlugin: new () => object;
+};
+
 const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: monorepoRoot,
   transpilePackages: ["@oficina/database"],
   serverExternalPackages: ["@prisma/client", "prisma"],
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.plugins = [...(config.plugins ?? []), new PrismaPlugin()];
+    }
+    return config;
+  },
   async headers() {
     const csp = [
       "default-src 'self'",
