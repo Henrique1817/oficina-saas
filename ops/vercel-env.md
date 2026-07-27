@@ -35,12 +35,21 @@ Sem `DATABASE_URL` / `DIRECT_URL` o passo `pnpm db:generate` no build da Vercel 
 
 | Variável | Notas |
 |----------|--------|
-| `STRIPE_SECRET_KEY` | `sk_live_…` / `rk_live_…` (ou test) |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | `pk_…` |
-| `STRIPE_WEBHOOK_SECRET` | Webhook → `POST /api/v1/billing/webhook` |
-| `STRIPE_PRICE_MONTHLY` | Price ID mensal |
-| `STRIPE_PRICE_YEARLY` | Price ID anual |
+| `MERCADOPAGO_ACCESS_TOKEN` | Produção ou `TEST-…` |
+| `MERCADOPAGO_WEBHOOK_SECRET` | Webhook → `POST /api/webhooks/mercadopago` |
+| `MERCADOPAGO_USE_SANDBOX` | `false` em produção |
 | `PLATFORM_ADMIN_EMAILS` | E-mails com acesso a growth/impersonate (vírgula) |
+
+---
+
+## Convites (e-mail mágico)
+
+| Variável | Notas |
+|----------|--------|
+| `RESEND_API_KEY` | HTML personalizado com magic link do Supabase |
+| `RESEND_FROM_EMAIL` | Remetente verificado (ex. `Oficina <onboarding@resend.dev>`) |
+
+No Supabase Auth → Redirect URLs: `{NEXT_PUBLIC_APP_URL}/auth/callback**`
 
 ---
 

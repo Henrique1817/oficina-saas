@@ -95,6 +95,22 @@ export const inviteRepository = {
     });
   },
 
+  /** Cancela convite pendente (só da própria org). */
+  async cancel(inviteId: string, organizationId: string) {
+    const invite = await prisma.organizationInvite.findFirst({
+      where: {
+        id: inviteId,
+        organizationId,
+        acceptedAt: null,
+      },
+    });
+    if (!invite) throw new Error("INVITE_NOT_FOUND");
+    if (invite.expiresAt < new Date()) throw new Error("INVITE_EXPIRED");
+
+    await prisma.organizationInvite.delete({ where: { id: invite.id } });
+    return { id: invite.id, email: invite.email };
+  },
+
   async accept(token: string, user: { id: string; email: string }) {
     const invite = await prisma.organizationInvite.findUnique({
       where: { token },

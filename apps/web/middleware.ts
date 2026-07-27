@@ -21,6 +21,7 @@ const PUBLIC_PATHS = [
   "/termos",
   "/privacidade",
   "/invite",
+  "/auth/callback",
   "/api/v1/health",
   "/api/v1/cron/low-stock",
   "/api/v1/cron/trial-ending",

@@ -2,7 +2,7 @@ import { withAuth } from "@oficina/auth";
 import { apiError, apiSuccess, createInviteSchema } from "@oficina/shared";
 import { parseJson } from "@/server/lib/parse";
 import { inviteRepository } from "@/server/modules/users/invite.repository";
-import { sendInviteEmail } from "@/server/modules/email/send";
+import { sendInviteMagicEmail } from "@/server/modules/email/invite-magic";
 import { prisma, type UserRole } from "@oficina/database";
 
 function inviteConflictMessage(code: string): { message: string; status: number; apiCode: string } | null {
@@ -52,18 +52,33 @@ export const POST = withAuth(async (ctx, request) => {
       select: { name: true },
     });
 
-    const mail = await sendInviteEmail({
+    const inviter = await prisma.profile.findUnique({
+      where: { id: ctx.userId },
+      select: { fullName: true },
+    });
+
+    const mail = await sendInviteMagicEmail({
       to: invite.email,
       organizationName: org?.name ?? "Oficina",
-      acceptUrl,
       role: invite.role,
+      inviteToken: invite.token,
+      invitedByName: inviter?.fullName,
     });
+
+    if (!mail.sent) {
+      console.warn("[invites] e-mail não enviado", {
+        email: invite.email,
+        channel: mail.channel,
+        error: mail.error,
+      });
+    }
 
     return apiSuccess(
       {
         ...invite,
         acceptUrl,
         emailSent: mail.sent,
+        emailChannel: mail.channel,
       },
       201,
     );

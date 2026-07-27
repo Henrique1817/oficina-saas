@@ -24,6 +24,8 @@ export async function sendInviteEmail(input: {
   organizationName: string;
   acceptUrl: string;
   role: string;
+  invitedByName?: string | null;
+  invitePageUrl?: string;
 }) {
   const resend = getResend();
   if (!resend) {
@@ -31,15 +33,20 @@ export async function sendInviteEmail(input: {
     return { sent: false as const };
   }
 
+  const { buildInviteEmailHtml } = await import("./invite-template");
+  const html = buildInviteEmailHtml({
+    organizationName: input.organizationName,
+    roleLabel: input.role,
+    magicUrl: input.acceptUrl,
+    invitePageUrl: input.invitePageUrl,
+    invitedByName: input.invitedByName,
+  });
+
   const { error } = await resend.emails.send({
     from: fromAddress(),
     to: input.to,
-    subject: `Convite para ${input.organizationName} no Oficina`,
-    html: `
-      <p>Você foi convidado para a oficina <strong>${input.organizationName}</strong> como <strong>${input.role}</strong>.</p>
-      <p><a href="${input.acceptUrl}">Aceitar convite</a></p>
-      <p>Se o botão não funcionar, copie: ${input.acceptUrl}</p>
-    `,
+    subject: `Convite para ${input.organizationName} — Oficina`,
+    html,
   });
 
   if (error) {

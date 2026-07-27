@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { getSessionOrRedirect } from "@/lib/session";
 import { InviteUserButton } from "@/components/actions/invite-user-button";
+import { CancelInviteButton } from "@/components/actions/cancel-invite-button";
 import { UserRoleSelect } from "@/components/actions/user-role-select";
 
 export default async function UsersPage() {
@@ -57,14 +58,17 @@ export default async function UsersPage() {
               {invites.map((inv) => (
                 <li
                   key={inv.id}
-                  className="flex flex-wrap items-center justify-between gap-2 px-6 py-4"
+                  className="flex flex-wrap items-center justify-between gap-3 px-6 py-4"
                 >
-                  <span className="text-ink-dim">
-                    {inv.email} · <span className="text-signal">{inv.role}</span>
-                  </span>
-                  <code className="font-[family-name:var(--font-mono)] text-xs text-ink-mute">
-                    /invite/{inv.token}
-                  </code>
+                  <div className="min-w-0 space-y-1">
+                    <p className="text-ink-dim">
+                      {inv.email} · <span className="text-signal">{inv.role}</span>
+                    </p>
+                    <code className="break-all font-[family-name:var(--font-mono)] text-xs text-ink-mute">
+                      /invite/{inv.token}
+                    </code>
+                  </div>
+                  <CancelInviteButton inviteId={inv.id} />
                 </li>
               ))}
             </ul>

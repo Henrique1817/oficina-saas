@@ -41,13 +41,15 @@ export default async function InvitePage({
         {expired && !used && <p className="text-sm text-danger">Este convite expirou.</p>}
         {!user && !used && !expired && (
           <p className="text-sm text-muted-foreground">
+            Abra o <strong className="text-foreground">link mágico do e-mail</strong> para
+            entrar automaticamente, ou{" "}
             <Link
               href={`/login?redirect=${encodeURIComponent(`/invite/${token}`)}`}
               className="text-primary hover:underline"
             >
-              Entre
+              entre com senha
             </Link>{" "}
-            com o e-mail convidado para aceitar.
+            usando o e-mail convidado.
           </p>
         )}
         {user && !used && !expired && <AcceptInviteButton token={token} />}

@@ -36,11 +36,18 @@ export function OnboardingWizard({
     setLoading(true);
     setError(null);
     try {
-      const invite = await apiFetch<{ acceptUrl: string }>("/api/v1/invites", {
+      const invite = await apiFetch<{
+        acceptUrl: string;
+        emailSent?: boolean;
+      }>("/api/v1/invites", {
         method: "POST",
         body: JSON.stringify({ email: inviteEmail, role: "MECHANIC" }),
       });
-      setInviteLink(invite.acceptUrl);
+      setInviteLink(
+        invite.emailSent
+          ? `E-mail enviado para ${inviteEmail}`
+          : invite.acceptUrl,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Falha ao convidar");
     } finally {

@@ -35,6 +35,26 @@ Fluxo: **PR → CI** (lint · typecheck · tests · build) · **push `main` → 
 
 Espelhar [`.env.example`](../.env.example) / [`ops/vercel-env.md`](./vercel-env.md) em cada projeto. `NEXT_PUBLIC_*` entram no **build**.
 
+### Convites (magic link)
+
+No projeto **web**:
+
+| Var | Uso |
+|-----|-----|
+| `RESEND_API_KEY` | Envia HTML personalizado com o magic link do Supabase |
+| `RESEND_FROM_EMAIL` | Remetente verificado no Resend |
+| `SUPABASE_SERVICE_ROLE_KEY` | Gera invite/magic link (`auth.admin.generateLink`) |
+| `NEXT_PUBLIC_APP_URL` | Base do redirect `/auth/callback?next=/invite/...` |
+
+No **Supabase → Authentication → URL Configuration → Redirect URLs**, inclua:
+
+```
+https://SEU-APP.vercel.app/auth/callback
+https://SEU-APP.vercel.app/auth/callback/**
+```
+
+Sem Resend, o app tenta `inviteUserByEmail` (SMTP do Supabase). Personalize o template **Invite user** no painel Auth se quiser.
+
 ## Testes locais
 
 ```bash
