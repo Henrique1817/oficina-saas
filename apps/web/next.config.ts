@@ -22,6 +22,13 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: monorepoRoot,
   transpilePackages: ["@oficina/database", "@oficina/shared", "@oficina/auth"],
   serverExternalPackages: ["@prisma/client", "prisma"],
+  // O tracing do Next não segue os symlinks do pnpm até o query engine do Prisma
+  outputFileTracingIncludes: {
+    "/**": [
+      "../../node_modules/.pnpm/@prisma+client*/node_modules/.prisma/client/*.node",
+      "../../node_modules/.pnpm/@prisma+client*/node_modules/.prisma/client/schema.prisma",
+    ],
+  },
   // Garante que o query engine do Prisma entre no bundle serverless (pnpm monorepo → Vercel)
   webpack: (config, { isServer }) => {
     if (isServer) {

@@ -14,13 +14,7 @@ export function estimateMrr(activeCount: number) {
   return activeCount * MRR_UNIT_BRL;
 }
 
-export function stripeDashboardUrl(
-  kind: "customers" | "subscriptions",
-  id: string,
-) {
-  const test = (process.env.STRIPE_SECRET_KEY ?? "").startsWith("sk_test");
-  const base = test
-    ? "https://dashboard.stripe.com/test"
-    : "https://dashboard.stripe.com";
-  return `${base}/${kind}/${id}`;
+/** Link para a assinatura no painel Mercado Pago (BR). */
+export function mpPreapprovalUrl(preapprovalId: string) {
+  return `https://www.mercadopago.com.br/subscriptions/admin#/${encodeURIComponent(preapprovalId)}`;
 }

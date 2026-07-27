@@ -33,7 +33,7 @@ export type ProvisionPilotResult =
     }
   | { ok: false; error: string };
 
-/** Cria oficina piloto: cortesia + trial longo + convite ADMIN (sem Stripe). */
+/** Cria oficina piloto: cortesia + trial longo + convite ADMIN (sem Mercado Pago). */
 export async function provisionPilot(input: {
   name: string;
   ownerEmail: string;

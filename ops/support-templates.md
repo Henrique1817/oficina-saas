@@ -13,7 +13,7 @@ Se a mesma dúvida aparecer 3× → vira item em `/ajuda` e aqui.
 **R:** Não. São 14 dias grátis. O cartão é cadastrado no início; a cobrança começa só após o trial (R$ 97/mês ou R$ 970/ano).
 
 **P:** Como cancelar?  
-**R:** Menu Assinatura → Portal Stripe → cancelar. O acesso segue até o fim do período já pago/trial.
+**R:** Menu Assinatura (`/billing`) → cancelar assinatura. O acesso segue até o fim do período já pago/trial.
 
 ## Convite de mecânico
 

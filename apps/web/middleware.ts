@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+/** Subpath sem Prisma — barrel `@oficina/auth` puxa with-auth e estoura o limite Edge (1 MB). */
 import { ORG_COOKIE, rolesForPath } from "@oficina/auth/roles";
 import { updateSession } from "@/lib/supabase/middleware";
 import { createClient } from "@supabase/supabase-js";
@@ -24,8 +25,10 @@ const PUBLIC_PATHS = [
   "/api/v1/cron/low-stock",
   "/api/v1/cron/trial-ending",
   "/api/v1/cron/dunning",
-  "/api/v1/billing/webhook",
+  "/api/webhooks/mercadopago",
   "/api/v1/platform/impersonate",
+  "/api/v1/platform/pipeline",
+  "/api/v1/cron/pipeline-prune",
 ];
 
 const AUTH_ONLY_PATHS = ["/onboarding", "/billing"];
@@ -50,7 +53,7 @@ type OrgRow = {
   past_due_at: string | null;
   suspended_at: string | null;
   billing_exempt?: boolean | null;
-  stripe_subscription_id: string | null;
+  mp_preapproval_id: string | null;
 };
 
 type MembershipRow = {
@@ -198,7 +201,7 @@ export async function middleware(request: NextRequest) {
   const { data: rows } = await supabase
     .from("memberships")
     .select(
-      "role, active, organization:organizations(slug, plan_status, trial_ends_at, past_due_at, suspended_at, billing_exempt, stripe_subscription_id)",
+      "role, active, organization:organizations(slug, plan_status, trial_ends_at, past_due_at, suspended_at, billing_exempt, mp_preapproval_id)",
     )
     .eq("user_id", user.id)
     .eq("active", true);

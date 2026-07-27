@@ -7,7 +7,7 @@ import { hasRole, orgSlugFromCookieHeader } from "./roles";
 export type WithAuthOptions = {
   roles?: UserRole[];
   /**
-   * Permite a rota mesmo sem plano ativo (ex.: checkout / portal Stripe).
+   * Permite a rota mesmo sem plano ativo (ex.: checkout / portal de assinatura).
    * Por padrão a API exige o mesmo gate das páginas.
    */
   allowWithoutPlan?: boolean;

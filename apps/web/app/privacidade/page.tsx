@@ -36,7 +36,7 @@ export default function PrivacidadePage() {
             </li>
             <li>
               <strong>Cobrança:</strong> dados de assinatura e identificadores do processador de
-              pagamento (Stripe); não armazenamos número completo de cartão.
+              pagamento (Mercado Pago); não armazenamos número completo de cartão.
             </li>
             <li>
               <strong>Uso do produto:</strong> logs técnicos, IP, navegador, eventos de erro e
@@ -63,7 +63,7 @@ export default function PrivacidadePage() {
           <h2 className="text-lg font-semibold">4. Compartilhamento</h2>
           <p>
             Podemos compartilhar dados com operadores essenciais: infraestrutura (ex.: Vercel,
-            Supabase), autenticação, e-mail transacional e Stripe para pagamentos. Não vendemos
+            Supabase), autenticação, e-mail transacional e Mercado Pago para pagamentos. Não vendemos
             dados pessoais.
           </p>
         </section>

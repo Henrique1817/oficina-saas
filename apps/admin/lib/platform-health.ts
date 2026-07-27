@@ -19,7 +19,8 @@ export async function loadPlatformHealth() {
   const twoWeeksAgo = new Date(now - 14 * DAY_MS);
   const monthAgo = new Date(now - 30 * DAY_MS);
 
-  const [orgs, cronRuns, osThisWeek, osThisMonth, partsByOrg] = await Promise.all([
+  const [orgs, cronRuns, osThisWeek, osThisMonth, partsByOrg, latestCdRun] =
+    await Promise.all([
     prisma.organization.findMany({
       orderBy: { createdAt: "desc" },
       include: {
@@ -40,6 +41,16 @@ export async function loadPlatformHealth() {
       by: ["organizationId"],
       where: { active: true },
       _count: { _all: true },
+    }),
+    prisma.platformPipelineRun.findFirst({
+      where: {
+        OR: [
+          { workflow: { equals: "CD Web" } },
+          { workflow: { contains: "CD", mode: "insensitive" } },
+        ],
+      },
+      orderBy: { createdAt: "desc" },
+      include: { steps: { orderBy: { stepOrder: "asc" } } },
     }),
   ]);
 
@@ -108,6 +119,7 @@ export async function loadPlatformHealth() {
     { job: "low-stock", label: "Estoque baixo", schedule: "08:00 UTC" },
     { job: "trial-ending", label: "Trial acabando", schedule: "09:00 UTC" },
     { job: "dunning", label: "Dunning PAST_DUE", schedule: "10:00 UTC" },
+    { job: "pipeline-prune", label: "Retenção pipelines", schedule: "Dom 03:00 UTC" },
   ] as const;
 
   const cronStatus = cronJobs.map((j) => {
@@ -126,7 +138,7 @@ export async function loadPlatformHealth() {
   const autonomyChecks: AutonomyCheck[] = [
     {
       id: "crons-defined",
-      label: "Crons no vercel.json (trial + estoque + dunning)",
+      label: "Crons no vercel.json (trial + estoque + dunning + pipeline)",
       ok: true,
     },
     {
@@ -143,18 +155,20 @@ export async function loadPlatformHealth() {
       ),
     },
     {
-      id: "stripe",
-      label: "Stripe secret configurada",
+      id: "mercadopago",
+      label: "Mercado Pago access token configurado",
       ok: Boolean(
-        process.env.STRIPE_SECRET_KEY &&
-          !process.env.STRIPE_SECRET_KEY.includes("placeholder") &&
-          process.env.STRIPE_SECRET_KEY.length > 10,
+        process.env.MERCADOPAGO_ACCESS_TOKEN &&
+          !process.env.MERCADOPAGO_ACCESS_TOKEN.includes("placeholder") &&
+          process.env.MERCADOPAGO_ACCESS_TOKEN.length > 20,
       ),
     },
     {
       id: "cron-fresh",
-      label: "Crons rodaram nas últimas 48h",
-      ok: cronStatus.every((c) => c.fresh),
+      label: "Crons operacionais rodaram nas últimas 48h",
+      ok: cronStatus
+        .filter((c) => c.job !== "pipeline-prune")
+        .every((c) => c.fresh),
       detail: cronStatus
         .map((c) =>
           c.lastRunAt
@@ -167,6 +181,14 @@ export async function loadPlatformHealth() {
       id: "paid-target",
       label: `≥ ${ACTIVE_TARGET_MIN} ACTIVE (atual: ${paid.length})`,
       ok: paid.length >= ACTIVE_TARGET_MIN,
+    },
+    {
+      id: "last-cd",
+      label: "Último deploy CD sucesso",
+      ok: latestCdRun?.status === "SUCCESS",
+      detail: latestCdRun
+        ? `${latestCdRun.workflow} · ${latestCdRun.status} · ${latestCdRun.createdAt.toLocaleString("pt-BR")}`
+        : "Nenhum run CD ainda",
     },
   ];
 
@@ -231,6 +253,22 @@ export async function loadPlatformHealth() {
       targetProgress,
       targetMin: ACTIVE_TARGET_MIN,
       targetMax: ACTIVE_TARGET_MAX,
+    },
+    pipeline: {
+      latestCd: latestCdRun
+        ? {
+            id: latestCdRun.id,
+            workflow: latestCdRun.workflow,
+            status: latestCdRun.status,
+            branch: latestCdRun.branch,
+            commitSha: latestCdRun.commitSha,
+            url: latestCdRun.url,
+            createdAt: latestCdRun.createdAt,
+            failedSteps: latestCdRun.steps
+              .filter((s) => s.status === "FAILURE")
+              .map((s) => s.name),
+          }
+        : null,
     },
     recentOrgs: orgs.slice(0, 12).map((o) => ({
       id: o.id,

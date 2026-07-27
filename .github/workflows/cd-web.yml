@@ -1,0 +1,107 @@
+name: CD Web
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: cd-web
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Migrate · Vercel · Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      PIPELINE_API_BASE: ${{ secrets.PIPELINE_API_BASE }}
+      PIPELINE_INGEST_SECRET: ${{ secrets.PIPELINE_INGEST_SECRET }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.DIRECT_URL }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Tools
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq jq
+          chmod +x scripts/pipeline-report.sh
+          npm i -g vercel@41
+
+      - name: Pipeline run start
+        id: pipe_start
+        if: ${{ env.PIPELINE_API_BASE != '' }}
+        continue-on-error: true
+        run: |
+          NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          RESP=$(./scripts/pipeline-report.sh upsert-run RUNNING "$NOW")
+          echo "run_id=$(echo "$RESP" | jq -r .id)" >> "$GITHUB_OUTPUT"
+
+      - name: Migrate
+        id: migrate
+        run: pnpm --filter @oficina/database db:migrate:deploy
+        continue-on-error: true
+
+      - name: Deploy Vercel
+        id: deploy
+        if: ${{ steps.migrate.outcome == 'success' }}
+        continue-on-error: true
+        run: |
+          cd apps/web
+          vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          vercel build --prod --token="$VERCEL_TOKEN"
+          URL=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN" | tr -d '\r' | tail -n 1)
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "Deployed: $URL"
+
+      - name: Smoke
+        id: smoke
+        if: ${{ steps.deploy.outcome == 'success' && steps.deploy.outputs.url != '' }}
+        continue-on-error: true
+        run: node scripts/api-smoke.mjs "${{ steps.deploy.outputs.url }}"
+
+      - name: Report steps
+        if: ${{ always() && env.PIPELINE_API_BASE != '' && steps.pipe_start.outputs.run_id != '' }}
+        continue-on-error: true
+        run: |
+          RUN_ID="${{ steps.pipe_start.outputs.run_id }}"
+          NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          report() {
+            local name="$1" order="$2" outcome="$3" summary="${4:-}"
+            local st="SUCCESS"
+            [[ "$outcome" == "failure" ]] && st="FAILURE"
+            [[ "$outcome" == "cancelled" ]] && st="CANCELLED"
+            [[ "$outcome" == "skipped" ]] && st="SKIPPED"
+            ./scripts/pipeline-report.sh upsert-step "$RUN_ID" "$name" "$order" "$st" "$summary" "" "$NOW"
+          }
+          report "migrate" 1 "${{ steps.migrate.outcome }}"
+          report "deploy" 2 "${{ steps.deploy.outcome }}" "${{ steps.deploy.outputs.url }}"
+          report "smoke" 3 "${{ steps.smoke.outcome }}"
+
+          FINAL="SUCCESS"
+          [[ "${{ steps.migrate.outcome }}" == "failure" || "${{ steps.deploy.outcome }}" == "failure" || "${{ steps.smoke.outcome }}" == "failure" ]] && FINAL="FAILURE"
+          [[ "${{ steps.migrate.outcome }}" == "skipped" || "${{ steps.deploy.outcome }}" == "skipped" ]] && [[ "$FINAL" != "FAILURE" ]] && FINAL="FAILURE"
+          ./scripts/pipeline-report.sh upsert-run "$FINAL" "" "$NOW"
+
+      - name: Fail if deploy pipeline failed
+        if: ${{ steps.migrate.outcome != 'success' || steps.deploy.outcome != 'success' || steps.smoke.outcome != 'success' }}
+        run: exit 1

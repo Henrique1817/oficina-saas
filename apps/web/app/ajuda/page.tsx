@@ -14,12 +14,12 @@ const FAQS = [
   },
   {
     q: "Vou ser cobrado na hora?",
-    a: "Não. Durante o trial o valor é R$ 0. Depois dos 14 dias o Stripe cobra automaticamente o plano escolhido (exceto cortesia / design partner).",
+    a: "Não. Durante o trial o valor é R$ 0. Depois dos 14 dias o Mercado Pago cobra automaticamente o plano escolhido (exceto cortesia / design partner).",
   },
-  {
-    q: "Como convido meu mecânico?",
-    a: "Em Usuários → Convidar. Envie o link /invite/... por WhatsApp se o e-mail não chegar.",
-  },
+    {
+      q: "Como convido meu mecânico?",
+      a: "Em Usuários → Convidar. Um e-mail só pode ter um papel na oficina. Envie o link /invite/... por WhatsApp se o e-mail não chegar.",
+    },
   {
     q: "Como envio orçamento ao cliente?",
     a: "Abra a OS → Orçamento → Imprimir/PDF ou botão WhatsApp (com telefone cadastrado no cliente). Em Oficina / Orçamento você edita validade e templates.",
@@ -38,7 +38,7 @@ const FAQS = [
   },
   {
     q: "Como cancelo?",
-    a: "Assinatura → Portal Stripe → cancelar. O acesso permanece até o fim do período vigente.",
+    a: "Em Assinatura (`/billing`) → cancelar assinatura. O acesso permanece até o fim do período vigente.",
   },
   {
     q: "Posso usar no celular?",

@@ -5,6 +5,9 @@
 
 export type AuthUserRole = "ADMIN" | "MANAGER" | "MECHANIC";
 
+/** Alias Edge-safe (mesmo conjunto de papéis do Prisma UserRole). */
+export type UserRole = AuthUserRole;
+
 const ROLE_HIERARCHY: Record<AuthUserRole, number> = {
   ADMIN: 3,
   MANAGER: 2,

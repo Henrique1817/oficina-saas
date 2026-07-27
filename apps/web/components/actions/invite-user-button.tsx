@@ -47,7 +47,10 @@ export function InviteUserButton() {
   return (
     <form onSubmit={submit} className="space-y-3 border border-line bg-bg-panel p-4">
       <h2 className="font-semibold">Novo convite</h2>
-      {error && <p className="text-sm text-danger">{error}</p>}
+      <p className="text-xs text-ink-mute">
+        Um e-mail só pode ter um papel nesta oficina (Admin, Gerente ou Mecânico).
+      </p>
+      {error && <p className="text-sm text-alert">{error}</p>}
       {link && (
         <p className="break-all text-sm text-success">
           Link: <a href={link}>{link}</a>

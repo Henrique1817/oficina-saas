@@ -21,6 +21,13 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: monorepoRoot,
   transpilePackages: ["@oficina/database"],
   serverExternalPackages: ["@prisma/client", "prisma"],
+  // O tracing do Next não segue os symlinks do pnpm até o query engine do Prisma
+  outputFileTracingIncludes: {
+    "/**": [
+      "../../node_modules/.pnpm/@prisma+client*/node_modules/.prisma/client/*.node",
+      "../../node_modules/.pnpm/@prisma+client*/node_modules/.prisma/client/schema.prisma",
+    ],
+  },
   webpack: (config, { isServer }) => {
     if (isServer) {
       config.plugins = [...(config.plugins ?? []), new PrismaPlugin()];

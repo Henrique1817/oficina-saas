@@ -1,21 +1,19 @@
 import { withAuth } from "@oficina/auth";
 import { apiError, apiSuccess } from "@oficina/shared";
 import {
-  createOrGetStripeCustomer,
-  createTrialCheckoutSession,
-  isStripeConfigured,
+  checkoutBodySchema,
+  createSubscriptionCheckout,
+  isMercadoPagoConfigured,
 } from "@/server/modules/billing";
 import { organizationRepository } from "@/server/modules/organizations/organization.repository";
-import { z } from "zod";
 import { parseJson } from "@/server/lib/parse";
 
-const checkoutBodySchema = z.object({
-  interval: z.enum(["monthly", "yearly"]).default("monthly"),
-});
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export const POST = withAuth(async (ctx, request) => {
-  if (!isStripeConfigured()) {
-    return apiError("Stripe não configurado", 503, "STRIPE_NOT_CONFIGURED");
+  if (!isMercadoPagoConfigured()) {
+    return apiError("Pagamentos não configurados", 503, "MP_NOT_CONFIGURED");
   }
 
   if (ctx.role !== "ADMIN") {
@@ -28,26 +26,29 @@ export const POST = withAuth(async (ctx, request) => {
   const org = await organizationRepository.findById(ctx.organizationId);
   if (!org) return apiError("Organização não encontrada", 404);
 
-  const customer = await createOrGetStripeCustomer({
-    email: ctx.email,
-    name: org.name,
-    organizationId: org.id,
-    existingCustomerId: org.stripeCustomerId,
-  });
-
-  if (!org.stripeCustomerId) {
-    await organizationRepository.updateBilling(org.id, {
-      stripeCustomerId: customer.id,
+  try {
+    const checkout = await createSubscriptionCheckout({
+      organizationId: org.id,
+      payerEmail: ctx.email,
+      organizationName: org.name,
+      interval: parsed.data.interval,
+      legalVersion: parsed.data.legalVersion,
     });
+
+    await organizationRepository.updateBilling(org.id, {
+      mpPreapprovalId: checkout.preapprovalId,
+      mpPlanId: parsed.data.interval,
+    });
+
+    return apiSuccess({
+      preapprovalId: checkout.preapprovalId,
+      initPoint: checkout.initPoint,
+      mode: checkout.mode,
+      /** Compat com client antigo que esperava `url` */
+      url: checkout.initPoint,
+    });
+  } catch (err) {
+    console.error("[mp:checkout] failed", err);
+    return apiError("Não foi possível iniciar o checkout", 500, "CHECKOUT_FAILED");
   }
-
-  const session = await createTrialCheckoutSession({
-    customerId: customer.id,
-    customerEmail: ctx.email,
-    organizationId: org.id,
-    interval: parsed.data.interval,
-  });
-
-  if (!session.url) return apiError("Não foi possível criar o Checkout", 500);
-  return apiSuccess({ url: session.url });
 }, { roles: ["ADMIN"], allowWithoutPlan: true });

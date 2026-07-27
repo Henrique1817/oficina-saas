@@ -12,11 +12,11 @@ pnpm --filter @oficina/database db:migrate:deploy
 - [ ] `NEXT_PUBLIC_WHATSAPP` (DDI+número, só dígitos) — atalho “Falar com suporte” no tenant
 - [ ] `NEXT_PUBLIC_SUPPORT_EMAIL` (opcional)
 - [ ] Resend (opcional; sem key, convites vão por WhatsApp)
-- [ ] Stripe live quando for cobrar (partners em cortesia podem esperar)
+- [ ] Mercado Pago live quando for cobrar (partners em cortesia podem esperar)
 
 ## 1. Dogfood (sua oficina)
 
-- [ ] `/admin/go-live` zerado (cortesia ok sem Stripe customer)
+- [ ] `/admin/go-live` zerado (cortesia ok sem assinante Mercado Pago)
 - [ ] Fluxo: cliente → OS → orçamento WhatsApp/PDF → autorização → faturada
 - [ ] Agenda do dia (prazos) + ferramentas na OS
 - [ ] Estoque: movimento rápido + alerta baixo
@@ -56,12 +56,13 @@ Dono no WhatsApp, 1–3 boxes, sofrendo com papel/planilha.
 
 Parceiro faz `/signup` normal → no console marque **design partner** + **cortesia**.
 
-## 3. Stripe live (quando sair da cortesia)
+## 3. Mercado Pago live (quando sair da cortesia)
 
-- [ ] Keys live + webhook `/api/v1/billing/webhook`
-- [ ] Portal ativo
+- [ ] `MERCADOPAGO_ACCESS_TOKEN` de produção + `MERCADOPAGO_WEBHOOK_SECRET`
+- [ ] Webhook `/api/webhooks/mercadopago` no painel MP
+- [ ] `MERCADOPAGO_USE_SANDBOX=false` em produção
 - [ ] 1 pagamento real (sua oficina ou partner convertendo)
-- [ ] Testar PAST_DUE
+- [ ] Testar PAST_DUE (grace 3 dias)
 
 ## 4. Critério de saída (item 7 “fechado” no mundo)
 

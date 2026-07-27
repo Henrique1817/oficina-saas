@@ -26,7 +26,7 @@ const steps = [
   {
     n: "04",
     title: "Cobrança automática",
-    body: "Stripe cuida da assinatura. Portal self-serve pra alterar ou cancelar.",
+    body: "Mercado Pago cuida da assinatura. Em /billing você altera ou cancela.",
   },
 ];
 

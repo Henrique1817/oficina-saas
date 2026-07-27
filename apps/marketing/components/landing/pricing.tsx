@@ -19,7 +19,7 @@ const included = [
   "Estoque e alertas",
   "Controle de ferramentas",
   "Equipe Admin / Gerente / Mecânico",
-  "Billing Stripe self-serve",
+  "Billing Mercado Pago self-serve",
   "Ambiente isolado por oficina",
 ];
 
@@ -73,8 +73,8 @@ export function Pricing({ id = "precos" }: { id?: string }) {
           Um plano. Trial de {siteConfig.trialDays} dias.
         </h2>
         <p className="mt-5 max-w-lg text-base text-ink-dim">
-          Cartão no cadastro. Cobrança só depois do trial. Cancele no portal
-          Stripe quando quiser.
+          Cartão no cadastro. Cobrança só depois do trial. Cancele em `/billing`
+          quando quiser.
         </p>
 
         <div className="mt-8 inline-flex border border-line p-1" role="group" aria-label="Periodicidade">

@@ -10,7 +10,7 @@ export function organizationHasAccess(org: {
   pastDueAt?: Date | null;
   suspendedAt?: Date | null;
   billingExempt?: boolean | null;
-  stripeSubscriptionId?: string | null;
+  mpPreapprovalId?: string | null;
 }): boolean {
   if (org.suspendedAt) return false;
   if (org.billingExempt) return true;

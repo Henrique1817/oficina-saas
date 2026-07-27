@@ -49,7 +49,7 @@ export default function TermosPage() {
           <h2 className="text-lg font-semibold">4. Assinatura e cobrança</h2>
           <p>
             Planos, preços e período de trial são informados no momento da contratação. Cobranças
-            recorrentes são processadas por processador de pagamento terceirizado (Stripe). Cancelamentos
+            recorrentes são processadas por processador de pagamento terceirizado (Mercado Pago). Cancelamentos
             e reembolsos seguem as regras do plano vigente e a legislação aplicável.
           </p>
         </section>

@@ -46,8 +46,12 @@ model Organization {
   quoteValidityDays    Int        @default(7) @map("quote_validity_days")
   /// Templates WhatsApp: [{ id, label, body }] com placeholders {{customer}}, {{total}}, etc.
   whatsappTemplates    Json       @default("[]") @map("whatsapp_templates")
-  stripeCustomerId     String?    @unique @map("stripe_customer_id")
-  stripeSubscriptionId String?    @unique @map("stripe_subscription_id")
+  /// Payer ID no Mercado Pago (numérico como string)
+  mpPayerId            String?    @unique @map("mp_payer_id")
+  /// ID da assinatura PreApproval no Mercado Pago
+  mpPreapprovalId      String?    @unique @map("mp_preapproval_id")
+  /// Plano interno resolvido no servidor: monthly | yearly
+  mpPlanId             String?    @map("mp_plan_id")
   planStatus           PlanStatus @default(TRIALING) @map("plan_status")
   trialEndsAt          DateTime?  @map("trial_ends_at")
   /// Início do PAST_DUE — usado no dunning (acesso soft por alguns dias)
@@ -80,6 +84,22 @@ model Organization {
 
   @@index([designPartner])
   @@map("organizations")
+}
+
+/// Claim atômico de webhooks Mercado Pago (idempotência por payment / authorized_payment / preapproval)
+model BillingWebhookClaim {
+  id        String   @id @default(cuid())
+  /// Ex.: payment:123 | authorized_payment:456 | preapproval:abc
+  claimKey  String   @unique @map("claim_key")
+  /// processing | done | failed
+  status    String
+  topic     String?
+  meta      Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([status, createdAt])
+  @@map("billing_webhook_claims")
 }
 
 model Membership {
@@ -182,6 +202,67 @@ model PlatformAuditLog {
   @@index([organizationId, createdAt])
   @@index([actorUserId, createdAt])
   @@map("platform_audit_logs")
+}
+
+enum PipelineRunStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILURE
+  CANCELLED
+}
+
+enum PipelineStepStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILURE
+  SKIPPED
+  CANCELLED
+}
+
+/// Runs de CI/CD (GitHub Actions) — histórico para o console /pipelines
+model PlatformPipelineRun {
+  id         String            @id @default(cuid())
+  provider   String            @default("GITHUB_ACTIONS")
+  externalId String            @map("external_id")
+  workflow   String
+  branch     String?
+  commitSha  String?           @map("commit_sha")
+  event      String?
+  status     PipelineRunStatus @default(PENDING)
+  url        String?
+  startedAt  DateTime?         @map("started_at")
+  finishedAt DateTime?         @map("finished_at")
+  createdAt  DateTime          @default(now()) @map("created_at")
+  updatedAt  DateTime          @updatedAt @map("updated_at")
+
+  steps PlatformPipelineStep[]
+
+  @@unique([provider, externalId])
+  @@index([createdAt])
+  @@index([status, createdAt])
+  @@map("platform_pipeline_runs")
+}
+
+model PlatformPipelineStep {
+  id         String             @id @default(cuid())
+  runId      String             @map("run_id")
+  name       String
+  /// Ordem estável no timeline (0, 1, 2…)
+  stepOrder  Int                @map("step_order")
+  status     PipelineStepStatus @default(PENDING)
+  startedAt  DateTime?          @map("started_at")
+  finishedAt DateTime?          @map("finished_at")
+  logSummary String?            @map("log_summary") @db.Text
+  createdAt  DateTime           @default(now()) @map("created_at")
+  updatedAt  DateTime           @updatedAt @map("updated_at")
+
+  run PlatformPipelineRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@unique([runId, name])
+  @@index([runId, stepOrder])
+  @@map("platform_pipeline_steps")
 }
 
 model PlatformImpersonationToken {

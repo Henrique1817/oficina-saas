@@ -15,6 +15,9 @@
     "test": {
       "dependsOn": ["^db:generate"]
     },
+    "typecheck": {
+      "dependsOn": ["^db:generate"]
+    },
     "db:generate": {
       "cache": false,
       "outputs": ["node_modules/.prisma/**", "generated/**"]

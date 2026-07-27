@@ -18,7 +18,7 @@ export default async function UsersPage() {
       <PageHeader
         eyebrow="Equipe"
         title="Usuários"
-        description="Admin, Gerente e Mecânico — cada um no seu escopo."
+        description="Admin, Gerente ou Mecânico — um e-mail, um papel por oficina."
         actions={<InviteUserButton />}
       />
 

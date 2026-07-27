@@ -162,6 +162,48 @@ export default async function SaudePage() {
         {pctBar(h.goLive.pct)}
       </Card>
 
+      <Card className="space-y-2">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-semibold">Último deploy (CD)</h2>
+          <Link href="/pipelines" className="text-xs text-primary hover:underline">
+            Ver pipelines →
+          </Link>
+        </div>
+        {h.pipeline.latestCd ? (
+          <>
+            <p
+              className={
+                h.pipeline.latestCd.status === "SUCCESS"
+                  ? "text-success"
+                  : h.pipeline.latestCd.status === "FAILURE"
+                    ? "text-danger"
+                    : "text-accent"
+              }
+            >
+              {h.pipeline.latestCd.status} · {h.pipeline.latestCd.workflow}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {h.pipeline.latestCd.branch ?? "—"} ·{" "}
+              {h.pipeline.latestCd.commitSha?.slice(0, 7) ?? "—"} ·{" "}
+              {h.pipeline.latestCd.createdAt.toLocaleString("pt-BR")}
+            </p>
+            {h.pipeline.latestCd.failedSteps.length > 0 && (
+              <p className="text-xs text-danger">
+                Steps com falha: {h.pipeline.latestCd.failedSteps.join(", ")}
+              </p>
+            )}
+            <Link
+              href={`/pipelines/${h.pipeline.latestCd.id}`}
+              className="text-xs text-primary hover:underline"
+            >
+              Abrir run
+            </Link>
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">Nenhum CD registrado ainda.</p>
+        )}
+      </Card>
+
       {h.acquisition.trialsEndingSoon.length > 0 && (
         <Card className="space-y-2">
           <h2 className="font-semibold">Trials acabando (&lt; 3 dias)</h2>

@@ -15,7 +15,7 @@ Meta: o produto **roda sozinho** no dia a dia — cobrança, alertas e scorecard
 
 ## Grace PAST_DUE
 
-1. Stripe `invoice.payment_failed` / status `past_due` → `planStatus=PAST_DUE` + `pastDueAt` (1ª vez).
+1. Webhook Mercado Pago (`subscription_authorized_payment` / falha) → `planStatus=PAST_DUE` + `pastDueAt` (1ª vez).
 2. Durante **3 dias** o tenant ainda entra (banner + e-mails de dunning).
 3. Depois do grace: middleware/API bloqueiam → `/billing`.
 4. Pagamento ok → `ACTIVE` e `pastDueAt=null`.
@@ -26,14 +26,14 @@ Meta: o produto **roda sozinho** no dia a dia — cobrança, alertas e scorecard
 2. Clicar **Exportar metrics.csv** (opcional; substitui editar `ops/metrics.csv` à mão).
 3. Conferir crons com último run &lt; 48h; se vazios, disparar/verificar Vercel Cron.
 4. Conferir Resend: trials, dunning, estoque baixo.
-5. Stripe: PAST_DUE sem ação humana além do e-mail automático.
-6. Se `CRON_SECRET` / Resend / Stripe env faltarem, crons e mails não disparam.
+5. Mercado Pago: PAST_DUE sem ação humana além do e-mail automático.
+6. Se `CRON_SECRET` / Resend / `MERCADOPAGO_*` faltarem, crons e mails não disparam.
 
 ## Critério de saída
 
 - [ ] Crons ativos em produção (Vercel → Cron Jobs)
 - [ ] Pelo menos 1 ciclo real de trial-ending **ou** dunning com e-mail entregue
-- [ ] PAST_DUE testado (modo test Stripe) com banner + bloqueio após 3 dias
+- [ ] PAST_DUE testado (sandbox Mercado Pago) com banner + bloqueio após 3 dias
 - [ ] 15–20 orgs `ACTIVE` (meta comercial; código não bloqueia)
 
 ## Env necessários
@@ -42,7 +42,7 @@ Meta: o produto **roda sozinho** no dia a dia — cobrança, alertas e scorecard
 CRON_SECRET=
 RESEND_API_KEY=
 RESEND_FROM_EMAIL=
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
+MERCADOPAGO_ACCESS_TOKEN=
+MERCADOPAGO_WEBHOOK_SECRET=
 PLATFORM_ADMIN_EMAILS=
 ```

@@ -72,8 +72,9 @@ export const organizationRepository = {
   async updateBilling(
     organizationId: string,
     data: {
-      stripeCustomerId?: string | null;
-      stripeSubscriptionId?: string | null;
+      mpPayerId?: string | null;
+      mpPreapprovalId?: string | null;
+      mpPlanId?: string | null;
       planStatus?: PlanStatus;
       trialEndsAt?: Date | null;
       pastDueAt?: Date | null;
@@ -85,8 +86,12 @@ export const organizationRepository = {
     });
   },
 
-  async findByStripeCustomerId(stripeCustomerId: string) {
-    return prisma.organization.findUnique({ where: { stripeCustomerId } });
+  async findByMpPayerId(mpPayerId: string) {
+    return prisma.organization.findUnique({ where: { mpPayerId } });
+  },
+
+  async findByMpPreapprovalId(mpPreapprovalId: string) {
+    return prisma.organization.findUnique({ where: { mpPreapprovalId } });
   },
 
   async findById(id: string) {

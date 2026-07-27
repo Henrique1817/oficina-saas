@@ -23,7 +23,7 @@ export default function PrivacidadePage() {
           <p>
             Conta de usuário (e-mail, autenticação), dados da oficina e registros
             operacionais que você cadastrar (clientes, veículos, OS, estoque,
-            ferramentas), além de dados de cobrança processados pelo Stripe.
+            ferramentas), além de dados de cobrança processados pelo Mercado Pago.
           </p>
           <h2>Finalidade</h2>
           <p>
@@ -33,7 +33,7 @@ export default function PrivacidadePage() {
           <h2>Compartilhamento</h2>
           <p>
             Prestadores necessários à operação (ex.: hospedagem, autenticação,
-            e-mail e Stripe). Não vendemos sua base de clientes.
+            e-mail e Mercado Pago). Não vendemos sua base de clientes.
           </p>
           <h2>Contato</h2>
           <p>

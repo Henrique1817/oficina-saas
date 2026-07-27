@@ -2,6 +2,7 @@
 /**
  * Smoke pós-deploy do produto (apps/web).
  * Uso: node scripts/api-smoke.mjs https://seu-app.vercel.app
+ * Exit 0 = ok; 1 = falha.
  */
 
 const base = (process.argv[2] || process.env.SMOKE_BASE_URL || "")
@@ -30,6 +31,9 @@ async function check(path, { expectOkJson = false } = {}) {
       throw new Error(
         `health falhou: HTTP ${status} body=${JSON.stringify(body)}`,
       );
+    }
+    if (body.database !== "connected") {
+      throw new Error(`database not connected: ${JSON.stringify(body)}`);
     }
     console.log(`✓ ${path} → ok (database=${body.database})`);
     return;
