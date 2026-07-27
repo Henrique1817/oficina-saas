@@ -1,5 +1,5 @@
 import { withAuth } from "@oficina/auth";
-import { apiSuccess, createInviteSchema } from "@oficina/shared";
+import { apiError, apiSuccess, createInviteSchema } from "@oficina/shared";
 import { parseJson } from "@/server/lib/parse";
 import { inviteRepository } from "@/server/modules/users/invite.repository";
 import { sendInviteEmail } from "@/server/modules/email/send";
