@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { loginUrl, signupUrl, siteConfig, whatsappUrl } from "@/lib/site";
+import {
+  isPlatformComingSoon,
+  loginUrl,
+  signupUrl,
+  siteConfig,
+  whatsappUrl,
+} from "@/lib/site";
 
 const productLinks = [
   { href: "/funcionalidades", label: "Funcionalidades" },
@@ -15,6 +21,7 @@ const legalLinks = [
 
 export function Footer() {
   const wa = whatsappUrl();
+  const comingSoon = isPlatformComingSoon();
 
   return (
     <footer className="border-t border-line bg-bg-elevated">
@@ -27,20 +34,41 @@ export function Footer() {
             {siteConfig.tagline}
           </p>
           <div className="mt-5 flex w-full flex-col gap-2.5 sm:mt-6 sm:w-auto sm:flex-row sm:flex-wrap sm:gap-3">
-            <a
-              href={signupUrl()}
-              className="inline-flex w-full items-center justify-center bg-signal px-4 py-3 text-xs font-semibold text-bg transition hover:bg-signal-bright sm:w-auto sm:py-2.5"
-              data-cursor="hot"
-            >
-              Trial 14 dias
-            </a>
-            <a
-              href={loginUrl()}
-              className="inline-flex w-full items-center justify-center border border-line px-4 py-3 text-xs text-ink-dim transition hover:border-line-strong hover:text-ink sm:w-auto sm:py-2.5"
-              data-cursor="hot"
-            >
-              Entrar no app
-            </a>
+            {comingSoon ? (
+              <>
+                <span
+                  className="inline-flex w-full cursor-not-allowed items-center justify-center bg-signal/40 px-4 py-3 text-xs font-semibold text-bg sm:w-auto sm:py-2.5"
+                  aria-disabled="true"
+                  title="Em breve"
+                >
+                  Em Breve
+                </span>
+                <span
+                  className="inline-flex w-full cursor-not-allowed items-center justify-center border border-line px-4 py-3 text-xs text-ink-mute sm:w-auto sm:py-2.5"
+                  aria-disabled="true"
+                  title="Em breve"
+                >
+                  Em Breve
+                </span>
+              </>
+            ) : (
+              <>
+                <a
+                  href={signupUrl()}
+                  className="inline-flex w-full items-center justify-center bg-signal px-4 py-3 text-xs font-semibold text-bg transition hover:bg-signal-bright sm:w-auto sm:py-2.5"
+                  data-cursor="hot"
+                >
+                  Trial 14 dias
+                </a>
+                <a
+                  href={loginUrl()}
+                  className="inline-flex w-full items-center justify-center border border-line px-4 py-3 text-xs text-ink-dim transition hover:border-line-strong hover:text-ink sm:w-auto sm:py-2.5"
+                  data-cursor="hot"
+                >
+                  Entrar no app
+                </a>
+              </>
+            )}
           </div>
         </div>
 

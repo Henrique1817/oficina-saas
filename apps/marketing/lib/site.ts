@@ -46,6 +46,16 @@ export function getSiteUrl() {
   );
 }
 
+/**
+ * Soft launch: CTAs de login/signup ficam "Em Breve".
+ * Desligar com NEXT_PUBLIC_PLATFORM_COMING_SOON=false no deploy.
+ */
+export function isPlatformComingSoon() {
+  const v = process.env.NEXT_PUBLIC_PLATFORM_COMING_SOON?.trim().toLowerCase();
+  if (v === "0" || v === "false" || v === "off") return false;
+  return true;
+}
+
 export function signupUrl() {
   return `${getAppUrl()}/signup`;
 }

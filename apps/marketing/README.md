@@ -21,6 +21,7 @@ Abre em [http://localhost:3002](http://localhost:3002).
 |-----|-----|
 | `NEXT_PUBLIC_APP_URL` | Base do produto (ex. `https://app.seudominio.com`). CTAs → `{URL}/signup` e `/login` |
 | `NEXT_PUBLIC_SITE_URL` | URL pública deste site (SEO, sitemap, Open Graph) |
+| `NEXT_PUBLIC_PLATFORM_COMING_SOON` | `true` (padrão): CTAs login/signup viram **Em Breve** e não clicam. `false` libera a plataforma |
 | `NEXT_PUBLIC_WHATSAPP` | Só dígitos com DDI (ex. `5511…`) — atalho WhatsApp em contato/footer |
 
 ## Rotas

@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { signupUrl, siteConfig } from "@/lib/site";
+import { isPlatformComingSoon, signupUrl, siteConfig } from "@/lib/site";
 
 export function StickyTrialCue() {
   const [visible, setVisible] = useState(false);
+  const comingSoon = isPlatformComingSoon();
 
   useEffect(() => {
     const onScroll = () => {
@@ -33,14 +34,24 @@ export function StickyTrialCue() {
         <p className="font-[family-name:var(--font-mono)] text-[0.65rem] leading-snug text-ink-dim">
           Trial {siteConfig.trialDays} dias · R$ {siteConfig.priceMonthly}/mês
         </p>
-        <a
-          href={signupUrl()}
-          className="shrink-0 bg-signal px-4 py-2.5 text-xs font-semibold text-bg"
-          data-cursor="hot"
-          tabIndex={visible ? 0 : -1}
-        >
-          Começar grátis
-        </a>
+        {comingSoon ? (
+          <span
+            className="shrink-0 cursor-not-allowed bg-signal/40 px-4 py-2.5 text-xs font-semibold text-bg"
+            aria-disabled="true"
+            title="Em breve"
+          >
+            Em Breve
+          </span>
+        ) : (
+          <a
+            href={signupUrl()}
+            className="shrink-0 bg-signal px-4 py-2.5 text-xs font-semibold text-bg"
+            data-cursor="hot"
+            tabIndex={visible ? 0 : -1}
+          >
+            Começar grátis
+          </a>
+        )}
       </div>
     </div>
   );

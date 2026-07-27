@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { loginUrl, signupUrl } from "@/lib/site";
+import { isPlatformComingSoon, loginUrl, signupUrl } from "@/lib/site";
 
 const nav = [
   { href: "/funcionalidades", label: "Produto" },
@@ -14,6 +14,7 @@ const nav = [
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const comingSoon = isPlatformComingSoon();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -62,20 +63,41 @@ export function Header() {
         </nav>
 
         <div className="hidden items-center gap-4 md:flex">
-          <a
-            href={loginUrl()}
-            className="mono-label text-ink-dim transition-colors hover:text-ink"
-            data-cursor="hot"
-          >
-            Entrar
-          </a>
-          <a
-            href={signupUrl()}
-            className="inline-flex items-center bg-signal px-4 py-2 text-xs font-semibold tracking-wide text-bg transition hover:bg-signal-bright"
-            data-cursor="hot"
-          >
-            14 dias grátis
-          </a>
+          {comingSoon ? (
+            <>
+              <span
+                className="mono-label cursor-not-allowed text-ink-mute"
+                aria-disabled="true"
+                title="Em breve"
+              >
+                Em Breve
+              </span>
+              <span
+                className="inline-flex cursor-not-allowed items-center bg-signal/40 px-4 py-2 text-xs font-semibold tracking-wide text-bg"
+                aria-disabled="true"
+                title="Em breve"
+              >
+                Em Breve
+              </span>
+            </>
+          ) : (
+            <>
+              <a
+                href={loginUrl()}
+                className="mono-label text-ink-dim transition-colors hover:text-ink"
+                data-cursor="hot"
+              >
+                Entrar
+              </a>
+              <a
+                href={signupUrl()}
+                className="inline-flex items-center bg-signal px-4 py-2 text-xs font-semibold tracking-wide text-bg transition hover:bg-signal-bright"
+                data-cursor="hot"
+              >
+                14 dias grátis
+              </a>
+            </>
+          )}
         </div>
 
         <button
@@ -121,15 +143,36 @@ export function Header() {
               </Link>
             ))}
             <div className="mt-4 flex flex-col gap-3 border-t border-line pt-5">
-              <a href={loginUrl()} className="text-ink-dim">
-                Entrar
-              </a>
-              <a
-                href={signupUrl()}
-                className="inline-flex items-center justify-center bg-signal px-4 py-3 text-sm font-semibold text-bg"
-              >
-                Começar 14 dias grátis
-              </a>
+              {comingSoon ? (
+                <>
+                  <span
+                    className="cursor-not-allowed text-ink-mute"
+                    aria-disabled="true"
+                    title="Em breve"
+                  >
+                    Em Breve
+                  </span>
+                  <span
+                    className="inline-flex cursor-not-allowed items-center justify-center bg-signal/40 px-4 py-3 text-sm font-semibold text-bg"
+                    aria-disabled="true"
+                    title="Em breve"
+                  >
+                    Em Breve
+                  </span>
+                </>
+              ) : (
+                <>
+                  <a href={loginUrl()} className="text-ink-dim">
+                    Entrar
+                  </a>
+                  <a
+                    href={signupUrl()}
+                    className="inline-flex items-center justify-center bg-signal px-4 py-3 text-sm font-semibold text-bg"
+                  >
+                    Começar 14 dias grátis
+                  </a>
+                </>
+              )}
             </div>
           </nav>
         </div>
