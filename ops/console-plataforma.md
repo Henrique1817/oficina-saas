@@ -38,6 +38,25 @@ docker compose up -d --build
 
 ## Env relevantes
 
+No projeto Vercel do **admin** (root `apps/admin`), configure:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+DATABASE_URL=
+DIRECT_URL=
+PLATFORM_ADMIN_EMAILS=henrimi4710@gmail.com
+NEXT_PUBLIC_APP_URL=https://SEU-APP-WEB.vercel.app
+NEXT_PUBLIC_ADMIN_URL=https://SEU-ADMIN.vercel.app
+```
+
+Sem Supabase + `DATABASE_URL`, o console cai com *“Application error: a server-side exception…”*.
+
+Build monorepo: use [`apps/admin/vercel.json`](../apps/admin/vercel.json) (install/build a partir da raiz).
+
+No Supabase Auth → URL Configuration, inclua o domínio do admin nas Redirect URLs.
+
 ```
 PLATFORM_ADMIN_EMAILS=seu@email.com
 # opcional: restringe IPs do console
