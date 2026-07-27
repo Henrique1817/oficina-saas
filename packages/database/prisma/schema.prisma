@@ -2,7 +2,7 @@
 
 generator client {
   provider      = "prisma-client-js"
-  // debian: imagem Docker | rhel: runtime Node da Vercel (Amazon Linux 2023)
+  // native = local/dev; debian = Docker; rhel = Vercel (Amazon Linux)
   binaryTargets = ["native", "debian-openssl-3.0.x", "rhel-openssl-3.0.x"]
 }
 

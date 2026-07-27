@@ -42,7 +42,7 @@ Planos no código: **mensal R$ 97** / **anual R$ 970** · trial **14 dias** · c
 - [ ] Inicializar git no monorepo e publicar no GitHub (privado)
 - [ ] New Project na Vercel → Root Directory = `apps/web`
 - [ ] Conferir Install/Build (já em `apps/web/vercel.json`)
-- [ ] Variáveis de ambiente de produção = todas do `.env.example` (valores reais)
+- [ ] Variáveis de ambiente: checklist completo em [`ops/vercel-env.md`](./vercel-env.md) (Production + Preview)
 - [ ] `NEXT_PUBLIC_APP_URL` = URL de produção (ex.: `https://app.seudominio.com`)
 - [ ] Apontar domínio customizado quando tiver
 - [ ] Rodar `pnpm --filter @oficina/database db:migrate:deploy` apontando para o banco de prod (ou via CI)

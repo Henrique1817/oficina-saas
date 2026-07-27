@@ -1,60 +1,56 @@
 #!/usr/bin/env node
 /**
- * Smoke HTTP da API pública pós-deploy.
+ * Smoke pós-deploy do produto (apps/web).
  * Uso: node scripts/api-smoke.mjs https://seu-app.vercel.app
  * Exit 0 = ok; 1 = falha.
  */
 
-const base = (process.argv[2] || process.env.SMOKE_BASE_URL || "").replace(/\/$/, "");
+const base = (process.argv[2] || process.env.SMOKE_BASE_URL || "")
+  .trim()
+  .replace(/\/$/, "");
 
 if (!base) {
-  console.error("Usage: node scripts/api-smoke.mjs <baseUrl>");
+  console.error("Uso: node scripts/api-smoke.mjs <base-url>");
   process.exit(1);
 }
 
-async function check(path, { expectStatus = 200, expectJson } = {}) {
+async function check(path, { expectOkJson = false } = {}) {
   const url = `${base}${path}`;
   const res = await fetch(url, { redirect: "manual" });
-  const text = await res.text();
-  let json = null;
-  try {
-    json = JSON.parse(text);
-  } catch {
-    /* plain */
+  const status = res.status;
+  let body = null;
+  const ct = res.headers.get("content-type") || "";
+  if (ct.includes("application/json")) {
+    body = await res.json();
+  } else {
+    await res.text();
   }
 
-  if (res.status !== expectStatus) {
-    throw new Error(`${path}: expected HTTP ${expectStatus}, got ${res.status} — ${text.slice(0, 200)}`);
+  if (expectOkJson) {
+    if (status !== 200 || !body || body.status !== "ok") {
+      throw new Error(
+        `health falhou: HTTP ${status} body=${JSON.stringify(body)}`,
+      );
+    }
+    if (body.database !== "connected") {
+      throw new Error(`database not connected: ${JSON.stringify(body)}`);
+    }
+    console.log(`✓ ${path} → ok (database=${body.database})`);
+    return;
   }
-  if (expectJson) {
-    expectJson(json);
+
+  if (status >= 500) {
+    throw new Error(`${path} → HTTP ${status}`);
   }
-  console.log(`✓ ${path} (${res.status})`);
+  console.log(`✓ ${path} → HTTP ${status}`);
 }
 
-async function main() {
-  console.log(`Smoke against ${base}`);
-
-  await check("/api/v1/health", {
-    expectStatus: 200,
-    expectJson: (body) => {
-      if (!body || body.status !== "ok") {
-        throw new Error(`health status not ok: ${JSON.stringify(body)}`);
-      }
-      if (body.database !== "connected") {
-        throw new Error(`database not connected: ${JSON.stringify(body)}`);
-      }
-    },
-  });
-
-  await check("/login", {
-    expectStatus: 200,
-  });
-
-  console.log("Smoke OK");
-}
-
-main().catch((err) => {
-  console.error("Smoke FAILED:", err.message || err);
+try {
+  await check("/api/v1/health", { expectOkJson: true });
+  await check("/login");
+  console.log("Smoke OK:", base);
+  process.exit(0);
+} catch (e) {
+  console.error("Smoke FAILED:", e instanceof Error ? e.message : e);
   process.exit(1);
-});
+}

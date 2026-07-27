@@ -2,7 +2,6 @@ name: CI
 
 on:
   pull_request:
-    branches: [main]
   push:
     branches: [main]
 
@@ -12,13 +11,22 @@ concurrency:
 
 jobs:
   verify:
-    name: Lint · typecheck · test
+    name: Lint · typecheck · tests · build
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     env:
-      PIPELINE_API_BASE: ${{ secrets.PIPELINE_API_BASE }}
+      PIPELINE_INGEST_URL: ${{ secrets.PIPELINE_INGEST_URL }}
       PIPELINE_INGEST_SECRET: ${{ secrets.PIPELINE_INGEST_SECRET }}
-      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      DATABASE_URL: postgresql://user:pass@localhost:5432/oficina?schema=public
+      DIRECT_URL: postgresql://user:pass@localhost:5432/oficina?schema=public
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.placeholder
+      SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.placeholder
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_ADMIN_URL: http://localhost:3001
+      NEXT_PUBLIC_SITE_URL: http://localhost:3002
+      CRON_SECRET: ci-cron-secret-placeholder-32chars
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -37,57 +45,95 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
-      - name: Prisma generate
-        run: pnpm db:generate
-
-      - name: Pipeline run start
-        id: pipe_start
-        if: ${{ env.PIPELINE_API_BASE != '' }}
+      - name: Pipeline run (start)
+        if: always()
         continue-on-error: true
-        run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq jq
-          chmod +x scripts/pipeline-report.sh
-          NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          RESP=$(./scripts/pipeline-report.sh upsert-run RUNNING "$NOW")
-          echo "run_id=$(echo "$RESP" | jq -r .id)" >> "$GITHUB_OUTPUT"
+        run: node scripts/pipeline-report.mjs run --status RUNNING
+
+      - name: Generate Prisma client
+        run: pnpm db:generate
 
       - name: Lint
         id: lint
         run: pnpm lint
         continue-on-error: true
 
+      - name: Report lint
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ "${{ steps.lint.outcome }}" = "success" ]; then
+            node scripts/pipeline-report.mjs step --name lint --status SUCCESS --order 1
+          else
+            node scripts/pipeline-report.mjs step --name lint --status FAILURE --order 1 --log "pnpm lint falhou"
+          fi
+
       - name: Typecheck
         id: typecheck
         run: pnpm typecheck
         continue-on-error: true
+
+      - name: Report typecheck
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ "${{ steps.typecheck.outcome }}" = "success" ]; then
+            node scripts/pipeline-report.mjs step --name typecheck --status SUCCESS --order 2
+          else
+            node scripts/pipeline-report.mjs step --name typecheck --status FAILURE --order 2 --log "pnpm typecheck falhou"
+          fi
 
       - name: Unit tests
         id: test
         run: pnpm test
         continue-on-error: true
 
-      - name: Report steps
-        if: ${{ always() && env.PIPELINE_API_BASE != '' && steps.pipe_start.outputs.run_id != '' }}
+      - name: Report tests
+        if: always()
         continue-on-error: true
         run: |
-          RUN_ID="${{ steps.pipe_start.outputs.run_id }}"
-          NOW=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          report() {
-            local name="$1" order="$2" outcome="$3"
-            local st="SUCCESS"
-            [[ "$outcome" == "failure" ]] && st="FAILURE"
-            [[ "$outcome" == "cancelled" ]] && st="CANCELLED"
-            [[ "$outcome" == "skipped" ]] && st="SKIPPED"
-            ./scripts/pipeline-report.sh upsert-step "$RUN_ID" "$name" "$order" "$st" "outcome=$outcome" "" "$NOW"
-          }
-          report "lint" 1 "${{ steps.lint.outcome }}"
-          report "typecheck" 2 "${{ steps.typecheck.outcome }}"
-          report "test" 3 "${{ steps.test.outcome }}"
+          if [ "${{ steps.test.outcome }}" = "success" ]; then
+            node scripts/pipeline-report.mjs step --name unit-tests --status SUCCESS --order 3
+          else
+            node scripts/pipeline-report.mjs step --name unit-tests --status FAILURE --order 3 --log "pnpm test falhou"
+          fi
 
-          FINAL="SUCCESS"
-          [[ "${{ steps.lint.outcome }}" == "failure" || "${{ steps.typecheck.outcome }}" == "failure" || "${{ steps.test.outcome }}" == "failure" ]] && FINAL="FAILURE"
-          ./scripts/pipeline-report.sh upsert-run "$FINAL" "" "$NOW"
+      - name: Build apps (web · admin · marketing)
+        id: build
+        run: pnpm build
+        continue-on-error: true
 
-      - name: Fail if any check failed
-        if: ${{ steps.lint.outcome == 'failure' || steps.typecheck.outcome == 'failure' || steps.test.outcome == 'failure' }}
-        run: exit 1
+      - name: Report build
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ "${{ steps.build.outcome }}" = "success" ]; then
+            node scripts/pipeline-report.mjs step --name build --status SUCCESS --order 4
+          else
+            node scripts/pipeline-report.mjs step --name build --status FAILURE --order 4 --log "pnpm build falhou"
+          fi
+
+      - name: Pipeline run (finish)
+        if: always()
+        continue-on-error: true
+        run: |
+          if [ "${{ steps.lint.outcome }}" = "success" ] \
+            && [ "${{ steps.typecheck.outcome }}" = "success" ] \
+            && [ "${{ steps.test.outcome }}" = "success" ] \
+            && [ "${{ steps.build.outcome }}" = "success" ]; then
+            node scripts/pipeline-report.mjs run --status SUCCESS --finished
+          else
+            node scripts/pipeline-report.mjs run --status FAILURE --finished
+          fi
+
+      - name: Gate
+        if: always()
+        run: |
+          if [ "${{ steps.lint.outcome }}" != "success" ] \
+            || [ "${{ steps.typecheck.outcome }}" != "success" ] \
+            || [ "${{ steps.test.outcome }}" != "success" ] \
+            || [ "${{ steps.build.outcome }}" != "success" ]; then
+            echo "CI falhou (lint/typecheck/test/build)"
+            exit 1
+          fi
+          echo "CI OK"

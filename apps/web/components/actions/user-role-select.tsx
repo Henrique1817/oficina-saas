@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api-client";
-import { Button } from "@/components/ui/button";
 
 export function UserRoleSelect({
   userId,

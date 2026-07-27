@@ -1,30 +1,37 @@
-/** Local union — evita puxar `@oficina/database` / Prisma no Edge (middleware). */
-export type UserRole = "ADMIN" | "MANAGER" | "MECHANIC";
+/**
+ * Helpers de papel/rota — Edge-safe.
+ * Não importe @oficina/database daqui (Prisma estoura o limite de 1 MB do middleware).
+ */
 
-const ROLE_HIERARCHY: Record<UserRole, number> = {
+export type AuthUserRole = "ADMIN" | "MANAGER" | "MECHANIC";
+
+/** Alias Edge-safe (mesmo conjunto de papéis do Prisma UserRole). */
+export type UserRole = AuthUserRole;
+
+const ROLE_HIERARCHY: Record<AuthUserRole, number> = {
   ADMIN: 3,
   MANAGER: 2,
   MECHANIC: 1,
 };
 
-export function hasRole(userRole: UserRole, allowed: UserRole[]): boolean {
+export function hasRole(userRole: AuthUserRole, allowed: AuthUserRole[]): boolean {
   return allowed.includes(userRole);
 }
 
-export function hasMinimumRole(userRole: UserRole, minimum: UserRole): boolean {
+export function hasMinimumRole(userRole: AuthUserRole, minimum: AuthUserRole): boolean {
   return ROLE_HIERARCHY[userRole] >= ROLE_HIERARCHY[minimum];
 }
 
 export const ORG_COOKIE = "oficina_org";
 
-export const ROUTE_ROLE_MAP: Record<string, UserRole[]> = {
+export const ROUTE_ROLE_MAP: Record<string, AuthUserRole[]> = {
   "/admin": ["ADMIN"],
   // Mecânicos podem cadastrar clientes e peças nas rotas /manager/*
   "/manager": ["ADMIN", "MANAGER", "MECHANIC"],
   "/workshop": ["ADMIN", "MANAGER", "MECHANIC"],
 };
 
-export function rolesForPath(pathname: string): UserRole[] | null {
+export function rolesForPath(pathname: string): AuthUserRole[] | null {
   for (const [prefix, roles] of Object.entries(ROUTE_ROLE_MAP)) {
     if (pathname.startsWith(prefix)) return roles;
   }
